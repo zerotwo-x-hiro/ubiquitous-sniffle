@@ -8,6 +8,7 @@ import {
 import type { EnrichedDrama } from "@/api";
 import { fetchDramaByTitle, fetchRecentKdramas, pickArtByTitle, slugifyTitle } from "@/api";
 import { deriveStatus, canDisplayRating } from "@/lib/status";
+import { loadFullCatalog, toDrama } from "@/catalog";
 
 export type AnyDrama = Drama | EnrichedDrama;
 
@@ -57,6 +58,7 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
   const [recent, setRecent] = useState<AnyDrama[]>([]);
   const [loading, setLoading] = useState(true);
   const [liveCount, setLiveCount] = useState(0);
+  const [catalogShows, setCatalogShows] = useState<AnyDrama[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -72,6 +74,13 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
       setLiveCount(finalMap.size);
       setLoading(false);
     });
+
+    // Load the generated TVMaze catalogue (2k+ titles) in the background
+    // so drama pages for non-curated titles still resolve.
+    loadFullCatalog().then((cat) => {
+      if (cancelled) return;
+      setCatalogShows(cat.shows.map(toDrama));
+    }).catch(() => {});
 
     fetchRecentKdramas(12)
       .then((items) => {
@@ -140,6 +149,8 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
 
     const bySlug = new Map<string, AnyDrama>();
     for (const s of allShows) bySlug.set(s.slug, s);
+    // Merge TVMaze catalog entries (curated + shelves take precedence).
+    for (const s of catalogShows) { if (!bySlug.has(s.slug)) bySlug.set(s.slug, s); }
 
     const findBySlug = (slug: string): AnyDrama | undefined => {
       const key = Object.prototype.hasOwnProperty.call(SLUG_REDIRECTS, slug)
@@ -148,7 +159,8 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
       if (!key) return undefined;
       return bySlug.get(key) ?? (() => {
         const seed = resolveSlug(key);
-        return seed ? enrich(seed) : undefined;
+        if (seed) return enrich(seed);
+        return catalogShows.find((c) => c.slug === key);
       })();
     };
 
@@ -174,7 +186,7 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
       collectionResolve,
       findBySlug,
     };
-  }, [map, recent, liveCount, loading]);
+  }, [map, recent, liveCount, loading, catalogShows]);
 
   return <Ctx.Provider value={state}>{children}</Ctx.Provider>;
 }

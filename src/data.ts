@@ -24,6 +24,18 @@ export type Drama = {
   network?: string;
   isNew?: boolean;
   tvmazeId?: number;
+  // Optional extended fields populated from the live TVMaze catalogue
+  // (see src/catalog.ts toDrama) or from the enrichment endpoint. These
+  // are all optional so hand-curated entries stay minimal.
+  poster?: string;
+  posterOriginal?: string;
+  runtime?: number | null;
+  status?: string | null;
+  premiered?: string | null;
+  ended?: string | null;
+  imdbId?: string | null;
+  tvmazeUrl?: string;
+  _fromCatalog?: boolean;
 };
 
 export type ShelfDef = { id: string; title: string; eyebrow?: string; slugList: string[]; live?: boolean };

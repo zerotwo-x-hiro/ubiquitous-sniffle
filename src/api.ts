@@ -290,7 +290,7 @@ export async function fetchDramaByTitle(seed: Drama, options?: { episodes?: bool
     }
   }
 
-  if (!best) return { ...seed, fetchError: lastErr?.message };
+  if (!best) return { ...seed, fetchError: lastErr?.message } as EnrichedDrama;
 
   // If best candidate lacks a poster, hydrate via /shows/:id (full record).
   const hydrated = await hydratePosterIfMissing(best);
