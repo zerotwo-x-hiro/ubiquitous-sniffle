@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Sitemap location (dynamically generated; cached 1h at edge).
+Sitemap: https://kdramaworld-v2-1793173646.vercel.app/api/sitemap.xml
+
+# Block pathological/duplicate query combos that add no value for crawlers.
+Disallow: /api/
+Disallow: /*?*q=
+Disallow: /*?*cb=
+Disallow: /*?*bust=

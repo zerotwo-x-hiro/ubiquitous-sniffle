@@ -5,12 +5,13 @@
   "installCommand": "npm install",
   "outputDirectory": "dist",
   "functions": {
-    "api/tvmaze/[...path].js": {
-      "maxDuration": 15
-    }
+    "api/tvmaze/[...path].js": { "maxDuration": 15 },
+    "api/sitemap.xml.js": { "maxDuration": 10 },
+    "api/health.js": { "maxDuration": 10 }
   },
   "rewrites": [
     { "source": "/api/tvmaze/:path*", "destination": "/api/tvmaze/[...path]" },
+    { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
