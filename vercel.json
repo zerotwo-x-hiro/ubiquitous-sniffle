@@ -8,5 +8,9 @@
     "api/tvmaze/[...path].js": {
       "maxDuration": 15
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/api/tvmaze/:path*", "destination": "/api/tvmaze/[...path]" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
 }
