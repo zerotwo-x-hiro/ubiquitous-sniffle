@@ -29,6 +29,9 @@ const PINNED = {
   "twinkling-watermelon": 71088,
   "sky-castle": 39318,
   signal: 9440,
+  "strangers-from-hell": 40651,
+  "my-love-from-the-star": 3704,
+  "whats-wrong-with-secretary-kim": 36183,
 };
 
 const GENRES = {

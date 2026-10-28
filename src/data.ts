@@ -89,6 +89,9 @@ add({ slug: "squid-game",    title: "Squid Game", year: 2021, rating: 7.9, genre
 add({ slug: "arthdal",            title: "Arthdal Chronicles", year: 2019, rating: 8.3, genres: ["Fantasy","Drama","Action"], blurb: "Tribal war, prophecies and bronze-age ambition in the mythic land of Arth.", art: A(0) });
 add({ slug: "secret-garden",       title: "Secret Garden", year: 2010, rating: 8.0, genres: ["Romance","Comedy","Fantasy"], blurb: "A bickering CEO and a stuntwoman swap bodies whenever it rains.", art: A(2) });
 add({ slug: "chicago-typewriter", title: "Chicago Typewriter", year: 2017, rating: 8.2, genres: ["Romance","Fantasy","Mystery"], blurb: "Three 1930s resistance fighters are reincarnated as a writer, a fan, and a ghost.", art: A(3) });
+add({ slug: "strangers-from-hell", title: "Strangers from Hell", year: 2019, rating: 7.7, genres: ["Thriller","Mystery","Drama","Horror"], blurb: "A young man moves to Seoul for a job and checks into an ominous dormitory where the other residents are not what they seem.", art: A(7), tvmazeId: 40651, network: "OCN" });
+add({ slug: "my-love-from-the-star", title: "My Love from the Star", year: 2013, rating: 7.8, episodes: 21, genres: ["Romance","Comedy","Fantasy","Sci-Fi"], blurb: "An alien who landed on Earth 400 years ago falls for a top actress in the final three months before his ship departs.", art: A(4), tvmazeId: 3704, network: "SBS" });
+add({ slug: "whats-wrong-with-secretary-kim", title: "What's Wrong with Secretary Kim", year: 2018, rating: 8.0, episodes: 16, genres: ["Romance","Comedy","Drama"], blurb: "A narcissistic vice-chairman panics when his hyper-competent secretary of nine years announces her resignation.", art: A(1), tvmazeId: 36183, network: "tvN" });
 
 // -----------------------------------------------------------------------------
 // Step 2: catalogue is complete. Shelves/collections are slug lists only.
@@ -125,14 +128,15 @@ export const DISCOVER_SLUGS = [
 export const ROMANCE_SLUGS = [
   "when-life-gives-you-tangerines","reply-1988","twinkling-watermelon","lovely-runner",
   "alchemy-of-souls","business-proposal","marry-my-husband","goblin",
-  "crash-landing-on-you","mr-sunshine",
+  "crash-landing-on-you","mr-sunshine","whats-wrong-with-secretary-kim","my-love-from-the-star",
 ];
 export const THRILLER_SLUGS = [
   "mouse","flower-of-evil","signal","healer","kingdom","sky-castle","tunnel","squid-game",
+  "strangers-from-hell",
 ];
 export const FANTASY_SLUGS = [
   "twinkling-watermelon","alchemy-of-souls","goblin","kingdom","tunnel",
-  "arthdal","secret-garden","chicago-typewriter",
+  "arthdal","secret-garden","chicago-typewriter","my-love-from-the-star",
 ];
 
 export const discover: Drama[]    = bySlugs(DISCOVER_SLUGS);
