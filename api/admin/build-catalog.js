@@ -13,9 +13,16 @@
 const BASE = "https://api.tvmaze.com/shows";
 const MIN_YEAR = 1990;
 const PAGE_BUDGET_MS = 45_000;
-const CONCURRENCY = 8;
-const PAGE_INTER_PAGE_DELAY_MS = 40; // ~25 req/s burst; well within TVMaze limits
+const CONCURRENCY = 4;
+const PAGE_INTER_PAGE_DELAY_MS = 80;
 const MAX_PAGES = 600;
+
+// In-memory catalog cache (module-level) — survives across warm lambda
+// invocations so subsequent ?year= slices (or a retry) don't re-paginate
+// all of TVMaze. Invalidated when the lambda cold-starts.
+let _cached = null;
+let _cachedAt = 0;
+const CACHE_TTL_MS = 1000 * 60 * 15; // 15 min
 
 function authorized(url) {
   if (process.env.BUILD_TOKEN) {
@@ -98,7 +105,26 @@ export default async function handler(req, res) {
   try {
     const body = req.method === "POST" ? (await readBody(req) || {}) : {};
     const startPage = Math.max(0, Number(url.searchParams.get("page")) || body.nextPage || 0);
+    const forceRefresh = url.searchParams.has("refresh");
     const incoming = Array.isArray(body.shows) ? body.shows : [];
+
+    // Serve from cache if available and fresh.
+    if (!forceRefresh && _cached && Date.now() - _cachedAt < CACHE_TTL_MS) {
+      const cachedList = _cached;
+      const yearParam = url.searchParams.get("year");
+      if (yearParam) {
+        const y = Number(yearParam);
+        const slice = cachedList.filter((s) => s.y === y);
+        res.setHeader("content-type", "application/json; charset=utf-8");
+        res.setHeader("cache-control", "no-store");
+        res.end(JSON.stringify({ done: true, year: y, count: cachedList.length, sliceCount: slice.length, shows: slice, fromCache: true }));
+        return;
+      }
+      res.setHeader("content-type", "application/json; charset=utf-8");
+      res.setHeader("cache-control", "no-store");
+      res.end(JSON.stringify({ done: true, count: cachedList.length, shows: cachedList, fromCache: true, fetchedAt: new Date(_cachedAt).toISOString() }));
+      return;
+    }
 
     const shows = new Map();
     for (const s of incoming) if (s && s.id != null) shows.set(s.id, s);
@@ -148,6 +174,8 @@ export default async function handler(req, res) {
     res.setHeader("content-type", "application/json; charset=utf-8");
     res.setHeader("cache-control", "no-store");
     if (stoppedAt404) {
+      _cached = finalShows;
+      _cachedAt = Date.now();
       // Optional year filter so tooling can download incrementally without
       // hitting response-size limits (handy when the agent can't read huge
       // bodies in one go). ?year=2024 returns just that year's slice.
