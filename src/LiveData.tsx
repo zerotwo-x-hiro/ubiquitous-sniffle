@@ -1,9 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import type { Drama, Collection } from "@/data";
-import { shelves as seedShelves, featured as seedFeatured, collections as seedCollections,
-         genres as genreDefs, collectionItems, comingSoon as seedComingSoon,
-         recentFallback } from "@/data";
+import {
+  CATALOG, SHELF_DEFS, featured as seedFeatured, collections as seedCollections,
+  genres as genreDefs, SLUG_REDIRECTS, bySlugs, resolveSlug, collectionItems,
+} from "@/data";
 import type { EnrichedDrama } from "@/api";
 import { fetchDramaByTitle, fetchRecentKdramas, pickArtByTitle, slugifyTitle } from "@/api";
 import { deriveStatus, canDisplayRating } from "@/lib/status";
@@ -12,38 +13,26 @@ type AnyDrama = Drama | EnrichedDrama;
 
 type DataState = {
   featured: AnyDrama;
-  shelves: Array<{ id: string; title: string; eyebrow?: string; items: AnyDrama[] }>;
+  shelves: Array<{ id: string; title: string; eyebrow?: string; items: AnyDrama[]; live?: boolean }>;
   topRated: AnyDrama[];
   collections: Array<Collection & { resolvedItems: AnyDrama[]; avgRating: number | null }>;
   comingSoon: AnyDrama[];
   recentlyAdded: AnyDrama[];
-  actors: AnyDrama[];
   genreCounts: Record<string, number>;
   liveCount: number;
   loading: boolean;
-  /** Given a Collection, return its resolved Drama[] (live-enriched if available). */
   collectionResolve: (c: Collection) => AnyDrama[];
-  /** Look up a drama by slug (for DramaPage, deep links). */
-  findBySlug: (slug: string) => AnyDrama;
+  findBySlug: (slug: string) => AnyDrama | undefined;
 };
 
 const Ctx = createContext<DataState | null>(null);
 
-function merge<T extends Drama>(seeds: T[], map: Map<string, EnrichedDrama>): AnyDrama[] {
-  return seeds.map((s) => map.get(s.slug) ?? s);
+function enrichOne<T extends Drama>(s: T, map: Map<string, EnrichedDrama>): AnyDrama {
+  return map.get(s.slug) ?? s;
 }
 
-// All canonical seeds we want to live-enrich.
 function collectCanonical(): Drama[] {
-  const all: Drama[] = [seedFeatured];
-  for (const s of seedShelves) all.push(...s.items.filter((x) => !all.find((y) => y.slug === x.slug)));
-  for (const c of seedCollections) {
-    const items = collectionItems(c);
-    for (const it of items) if (!all.find((y) => y.slug === it.slug)) all.push(it);
-  }
-  for (const cs of seedComingSoon) if (!all.find((y) => y.slug === cs.slug)) all.push(cs);
-  for (const rf of recentFallback) if (!all.find((y) => y.slug === rf.slug)) all.push(rf);
-  return all;
+  return CATALOG.slice();
 }
 
 async function enrichAll(seeds: Drama[], onProgress: (map: Map<string, EnrichedDrama>) => void) {
@@ -53,12 +42,10 @@ async function enrichAll(seeds: Drama[], onProgress: (map: Map<string, EnrichedD
     const batch = seeds.slice(i, i + BATCH);
     const results = await Promise.all(batch.map((d) => fetchDramaByTitle(d).catch(() => null)));
     for (const r of results) {
-      if (r && r.tvmazeId) {
-        // Strip fabricated rating for upcoming shows (D-003).
-        const status = deriveStatus({ status: r.status, premiered: undefined, ended: undefined });
-        if (!canDisplayRating(status, r.rating)) r.rating = 0;
-        map.set(r.slug, r);
-      }
+      if (!r || !r.tvmazeId) continue;
+      const st = deriveStatus({ status: r.status, premiered: undefined, ended: undefined });
+      if (!canDisplayRating(st, r.rating)) r.rating = 0;
+      map.set(r.slug, r);
     }
     onProgress(new Map(map));
   }
@@ -67,7 +54,7 @@ async function enrichAll(seeds: Drama[], onProgress: (map: Map<string, EnrichedD
 
 export function LiveDataProvider({ children }: { children: ReactNode }) {
   const [map, setMap] = useState<Map<string, EnrichedDrama>>(() => new Map());
-  const [recent, setRecent] = useState<AnyDrama[]>(seedShelves.find((s) => s.id === "recent")!.items);
+  const [recent, setRecent] = useState<AnyDrama[]>([]);
   const [loading, setLoading] = useState(true);
   const [liveCount, setLiveCount] = useState(0);
 
@@ -86,16 +73,16 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    // Live "Recently Released / Airing" from TVMaze KR schedule
     fetchRecentKdramas(12)
       .then((items) => {
         if (cancelled || !items.length) return;
         const fixed = items.map((d) => {
-          const status = deriveStatus({ status: d.status, premiered: String(d.year) ? `${d.year}-01-01` : undefined });
-          return { ...d,
+          const st = deriveStatus({ status: d.status, premiered: d.year ? `${d.year}-01-01` : undefined });
+          return {
+            ...d,
             slug: `${slugifyTitle(d.title)}-${d.tvmazeId}`,
             art: d.art || pickArtByTitle(d.title),
-            rating: canDisplayRating(status, d.rating) ? d.rating : 0,
+            rating: canDisplayRating(st, d.rating) ? d.rating : 0,
           };
         });
         setRecent(fixed);
@@ -107,70 +94,80 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const state = useMemo<DataState>(() => {
-    const enrich = (s: Drama) => map.get(s.slug) ?? s;
-    const enrichedFeatured = enrich(seedFeatured);
-    const shelfDiscover = seedShelves.find((s) => s.id === "discover")!.items.map(enrich);
-    const shelfRecent = recent;
-    const shelfRomance = seedShelves.find((s) => s.id === "romance")!.items.map(enrich);
-    const shelfThriller = seedShelves.find((s) => s.id === "thriller")!.items.map(enrich);
-    const shelfFantasy = seedShelves.find((s) => s.id === "fantasy")!.items.map(enrich);
+    const enrich = (s: Drama) => enrichOne(s, map);
 
-    const shelves = [
-      { id: "discover", title: "Discover Your Next Favorite", eyebrow: "Curated",     items: shelfDiscover },
-      { id: "recent",   title: "Recently Aired",            eyebrow: "Live · TVMaze", items: shelfRecent },
-      { id: "romance",  title: "A Little Romance",          eyebrow: "Romance",       items: shelfRomance },
-      { id: "thriller", title: "One More Episode",          eyebrow: "Thriller",      items: shelfThriller },
-      { id: "fantasy",  title: "Beyond the Ordinary",       eyebrow: "Sci-Fi & Fantasy", items: shelfFantasy },
-    ];
+    const shelfItems = (slugList: string[]) => bySlugs(slugList).map(enrich);
+
+    const liveShelfItems: AnyDrama[] = recent.length ? recent : shelfItems([
+      "when-life-gives-you-tangerines","lovely-runner","marry-my-husband","twenty-five-twenty-one",
+    ]).map(d => ({ ...d, isNew: true }));
+
+    const shelves = SHELF_DEFS.map(s => ({
+      id: s.id,
+      title: s.title,
+      eyebrow: s.eyebrow,
+      live: !!s.live,
+      items: s.live ? liveShelfItems : shelfItems(s.slugList),
+    }));
 
     const collectionResolve = (c: Collection): AnyDrama[] => collectionItems(c).map(enrich);
 
-    const enrichedComingSoon = seedComingSoon.map(enrich);
+    const discoverShelf = shelves.find(s => s.id === "discover")!.items;
+    const allShelved = [enrich(seedFeatured), ...shelves.flatMap(s => s.items)];
 
-    const allRated = [...shelfDiscover, ...shelfRomance, ...shelfThriller, ...shelfFantasy];
-    const topRated = [...allRated]
+    const topRated = [...new Map(allShelved.map(d => [d.slug, d])).values()]
       .filter((d) => d.rating > 0)
       .sort((a, b) => b.rating - a.rating)
       .slice(0, 12);
 
-    // Compute genre counts across all live-enriched shelves.
     const counts: Record<string, number> = {};
     for (const def of genreDefs) counts[def.slug] = 0;
-    const genreSlugMap: Record<string, string> = {
-      "romance":"romance","comedy":"comedy","mystery":"mystery","crime":"crime",
-      "drama":"drama","thriller":"thriller","family":"family",
-    };
-    for (const d of allRated.concat(shelfRecent, enrichedComingSoon)) {
+    const allShows = [...new Map(allShelved.map(d => [d.slug, d])).values()];
+    for (const d of allShows) {
       for (const g of d.genres) {
-        const key = Object.keys(genreSlugMap).find(
-          (k) => g.toLowerCase().includes(k) || k.includes(g.toLowerCase())
-        );
-        if (key) counts[genreSlugMap[key]] = (counts[genreSlugMap[key]] || 0) + 1;
-        if (/fantasy|sci/i.test(g)) counts["sci-fi-and-fantasy"] = (counts["sci-fi-and-fantasy"] || 0) + 1;
+        const gl = g.toLowerCase();
+        if (gl.includes("romance")) counts.romance++;
+        else if (gl.includes("comedy")) counts.comedy++;
+        else if (gl.includes("mystery")) counts.mystery++;
+        else if (gl.includes("crime")) counts.crime++;
+        else if (gl.includes("family")) counts.family++;
+        else if (gl.includes("drama")) counts.drama++;
+        else if (gl.includes("thriller")) counts.thriller++;
+        else if (gl.includes("historical")) counts.historical = (counts.historical || 0) + 1;
+        if (/fantasy|sci/i.test(gl)) counts["sci-fi-and-fantasy"]++;
       }
     }
 
-    const allShows = [enrichedFeatured, ...shelfDiscover, ...shelfRecent, ...shelfRomance,
-                     ...shelfThriller, ...shelfFantasy, ...enrichedComingSoon];
     const bySlug = new Map<string, AnyDrama>();
     for (const s of allShows) bySlug.set(s.slug, s);
-    const findBySlug = (slug: string): AnyDrama => bySlug.get(slug) ?? enrichedFeatured;
+
+    const findBySlug = (slug: string): AnyDrama | undefined => {
+      const key = Object.prototype.hasOwnProperty.call(SLUG_REDIRECTS, slug)
+        ? SLUG_REDIRECTS[slug]
+        : slug;
+      if (!key) return undefined;
+      return bySlug.get(key) ?? (() => {
+        const seed = resolveSlug(key);
+        return seed ? enrich(seed) : undefined;
+      })();
+    };
 
     const resolvedCollections = seedCollections.map((c) => {
       const items = collectionResolve(c);
       const rated = items.filter((d) => d.rating > 0);
-      const avg = rated.length ? rated.reduce((s, d) => s + d.rating, 0) / rated.length : null;
+      const avg = rated.length
+        ? Math.round((rated.reduce((s, d) => s + d.rating, 0) / rated.length) * 10) / 10
+        : null;
       return { ...c, resolvedItems: items, avgRating: avg };
     });
 
     return {
-      featured: enrichedFeatured,
+      featured: enrich(seedFeatured),
       shelves,
       topRated,
       collections: resolvedCollections,
-      comingSoon: enrichedComingSoon,
-      recentlyAdded: shelfDiscover.slice(0, 6),
-      actors: [],
+      comingSoon: [],
+      recentlyAdded: discoverShelf.slice(0, 6),
       genreCounts: counts,
       liveCount,
       loading,
