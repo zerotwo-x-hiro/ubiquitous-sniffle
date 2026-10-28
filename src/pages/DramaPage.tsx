@@ -1,12 +1,13 @@
 import { Link, useParams } from "react-router-dom";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Poster from "@/components/Poster";
 import DramaCard from "@/components/DramaCard";
 import { useLiveData } from "@/LiveData";
 import { deriveStatus, statusLabel, canDisplayRating } from "@/lib/status";
 import { useSeo } from "@/lib/seo";
+import { fetchSupplemental } from "@/api";
 import type { Drama } from "@/data";
-import type { EnrichedDrama } from "@/api";
+import type { EnrichedDrama, ServerEnrich } from "@/api";
 
 type AnyDrama = Drama | EnrichedDrama;
 
@@ -14,27 +15,44 @@ export default function DramaPage() {
   const { slug } = useParams();
   const { findBySlug, shelves } = useLiveData();
   const drama = useMemo(() => findBySlug(slug ?? ""), [findBySlug, slug]);
+  const [supp, setSupp] = useState<ServerEnrich | null>(null);
+
+  const baseDrama = drama as EnrichedDrama;
+  const tvmazeId = baseDrama.tvmazeId;
+
+  useEffect(() => {
+    setSupp(null);
+    let cancelled = false;
+    if (!tvmazeId) return;
+    fetchSupplemental(tvmazeId).then((s) => { if (!cancelled) setSupp(s); });
+    return () => { cancelled = true; };
+  }, [tvmazeId]);
 
   if (!drama) return <NotFound slug={slug} />;
 
-  const backdrop = (drama as EnrichedDrama).backdrop;
-  const runtime = (drama as EnrichedDrama).runtime;
-  const imdbId = (drama as EnrichedDrama).imdbId;
-  const tvStatus = (drama as EnrichedDrama).status;
+  // Merge base TVMaze-driven drama with optional supplemental (TMDB/IMDb).
+  // Supplemental backdrop overrides TVMaze (TMDB 1280w is nicer for hero);
+  // IMDb rating is shown only when vote count >= 5,000 per policy.
+  const backdrop = supp?.backdrop || baseDrama.backdrop;
+  const runtime = baseDrama.runtime;
+  const imdbId = supp?.imdbId || baseDrama.imdbId;
+  const tvStatus = baseDrama.status;
   const status = deriveStatus({
     status: tvStatus,
     premiered: drama.year ? `${drama.year}-01-01` : undefined,
     ended: tvStatus === "Ended" && drama.year ? `${drama.year}-12-31` : undefined,
   });
-  const poster = (drama as EnrichedDrama).poster;
+  const poster = baseDrama.poster;
+  const imdbRating = supp?.imdbRating ?? null;
+  const imdbVotes = supp?.imdbVotes ?? null;
   const ratingLine = canDisplayRating(status, drama.rating)
-    ? `★ ${drama.rating.toFixed(1)} on TVMaze`
+    ? `${drama.rating.toFixed(1)} on TVMaze`
     : "";
   const metaBits = [drama.year, drama.network, ...drama.genres].filter(Boolean).join(" · ");
   useSeo({
     title: `${drama.title} (${drama.year})`,
     description: `${drama.title} — ${ratingLine ? ratingLine + " · " : ""}${metaBits}. ${drama.blurb || ""}`.slice(0, 200),
-    image: poster || (drama as EnrichedDrama).backdrop,
+    image: poster || backdrop,
     type: "article",
   });
 
@@ -98,6 +116,16 @@ export default function DramaPage() {
                   <span className="text-pink-200/90 uppercase tracking-widest text-[10px]">Not rated yet</span>
                 )}
               </span>
+              {imdbRating != null && imdbVotes != null && (
+                <span className="rating-pill px-2.5 py-1 rounded-full flex items-center gap-1.5 font-semibold"
+                      style={{ background: "rgba(245,197,24,.18)", border: "1px solid rgba(245,197,24,.35)" }}>
+                  <span style={{ color:"#f5c518", fontWeight:800, letterSpacing:-.5, fontSize:12, lineHeight:1 }}>IMDb</span>
+                  {imdbRating.toFixed(1)}
+                  <span className="text-white/60 text-[11px] ml-0.5 font-normal">
+                    {imdbVotes >= 1000 ? `${(imdbVotes/1000).toFixed(imdbVotes < 10000 ? 1 : 0)}k` : String(imdbVotes)} votes
+                  </span>
+                </span>
+              )}
               <span className="opacity-80">·</span><span>{drama.year}</span>
               {drama.episodes && <><span className="opacity-80">·</span><span>{drama.episodes} <span className="font-hangul text-xs tracking-normal opacity-90">부작</span></span></>}
               {runtime && <><span className="opacity-80">·</span><span>{runtime} min/ep</span></>}
