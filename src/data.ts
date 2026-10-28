@@ -52,7 +52,7 @@ export const featured: Drama = add({
   slug: "my-mister", title: "My Mister", year: 2018, rating: 8.5,
   episodes: 16, genres: ["Drama","Family"], tagline: "Top Pick · Featured K-Drama",
   blurb: "A man in his 40s withstands the weight of life. A woman in her 20s goes through different experiences, but also withstands the weight of life. The two meet and help each other.",
-  art: "art-a", network: "tvN",
+  art: "art-a", network: "tvN", tvmazeId: 33840,
 });
 
 add({ slug: "when-life-gives-you-tangerines", title: "When Life Gives You Tangerines", year: 2025, rating: 9.0, genres: ["Romance","Drama","Family"], blurb: "A sweeping generation-spanning story set on Jeju Island across decades of laughter, loss and tangerines.", art: A(1) });
