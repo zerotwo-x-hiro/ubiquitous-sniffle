@@ -23,6 +23,7 @@ export default function DramaPage() {
   const status = deriveStatus({
     status: tvStatus,
     premiered: drama.year ? `${drama.year}-01-01` : undefined,
+    ended: tvStatus === "Ended" && drama.year ? `${drama.year}-12-31` : undefined,
   });
 
   const related = useMemo(() => {
