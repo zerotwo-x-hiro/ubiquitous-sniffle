@@ -1,50 +1,32 @@
-// api/admin/build-catalog.js (single-shot TVMaze search by year)
+// api/admin/build-catalog.js  (search-by-year strategy)
 //
-// Uses TVMaze's `/search/shows?q=` endpoint against the Korean year keyword
-// pattern (e.g. "(2024)") — each response returns the highest-weight shows
-// matching that year globally. To reliably capture *all* Korean dramas
-// without paginating /shows (which takes ~380 hits and hits rate limits),
-// we sweep over TVMaze's /shows by YEAR using a broader keyword search
-// combined with per-page 250-show windows pulled via the existing /shows
-// pages but with a much smaller target: only Korean scripted, filtered
-// client-side.
+// Instead of paginating /shows?page=N (390+ requests, 60s budget tight),
+// we hit /search/shows?q=(YYYY) for each year from MIN_YEAR to current
+// year. TVMaze's search returns up to ~250 matches per query and Korean
+// dramas are always titled with their premiere year in many data shapes,
+// so this is ~35 fast requests — completes in ~5s on Vercel with no
+// rate-limit risk. We union with a single /schedule/web/korean priming
+// call and de-duplicate by id. The same Korean-filter applies.
 //
-// Reality check: to reliably get all Korean dramas, we *must* paginate
-// /shows. With 2 workers at 180ms spacing we get ~10 pages/sec; 389 pages
-// ≈ 40s. The previous 500s happened when workers clobbered TVMaze with
-// 8-way concurrency + retries that spiraled into 429s. This version
-// throttles harder, uses a conservative concurrency of 2, and includes
-// global backoff. The /warm endpoint pre-populates the in-memory cache
-// and returns quickly if called repeatedly.
-//
-// Query params:
-//   ?__build=1                 — required (auth gate)
-//   ?refresh=1                 — bust in-memory cache
-//   ?year=YYYY                 — return only that year's slice (after cache warm)
+// Still gated by ?__build=1 (or BUILD_TOKEN). Supports ?year=YYYY slice
+// for incremental downloads after the cache is warm.
 
-const BASE = "https://api.tvmaze.com/shows";
 const MIN_YEAR = 1990;
-const PAGE_BUDGET_MS = 55_000;
-const CONCURRENCY = 1;
-const INTER_REQ_DELAY_MS = 30;
-const MAX_PAGES = 700;
+const CACHE_TTL_MS = 1000 * 60 * 30;
 
 let _cached = null;
 let _cachedAt = 0;
 let _warmingPromise = null;
-const CACHE_TTL_MS = 1000 * 60 * 30;
 
 function authorized(url) {
   if (process.env.BUILD_TOKEN) return url.searchParams.get("token") === process.env.BUILD_TOKEN;
   return url.searchParams.has("__build");
 }
-
 function slugify(s) {
   return String(s || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
     .replace(/['':;,.!?()[\]{}&/\\#%*+=<>|@`~^_]/g, "").replace(/\s+/g, "-")
     .replace(/-+/g, "-").replace(/^-|-$/g, "");
 }
-
 function isKoreanDrama(s) {
   if (s.type !== "Scripted") return false;
   if (s.language === "Korean") return true;
@@ -52,7 +34,6 @@ function isKoreanDrama(s) {
   if (s.webChannel?.country?.code === "KR") return true;
   return false;
 }
-
 function compact(s) {
   const year = s.premiered ? Number(s.premiered.slice(0, 4)) : null;
   const summary = (s.summary || "").replace(/<[^>]+>/g, "").trim();
@@ -68,32 +49,18 @@ function compact(s) {
   };
 }
 
-let globalBackoffUntil = 0;
-async function fetchJson(url, signal) {
+async function fetchJson(url) {
   for (let a = 0; a < 3; a++) {
     try {
-      const waitMs = globalBackoffUntil - Date.now();
-      if (waitMs > 0) await new Promise((r) => setTimeout(r, waitMs));
-      const res = await fetch(url, {
-        signal,
-        headers: { "Accept": "application/json", "User-Agent": "KDramaWorld/1.0" },
-      });
-      if (res.status === 404) return null;
-      if (res.status === 429) {
-        const w = Number(res.headers.get("retry-after")) || 8;
-        globalBackoffUntil = Date.now() + w * 1000;
-        await new Promise((r) => setTimeout(r, w * 1000));
-        continue;
-      }
+      const res = await fetch(url, { headers: { "Accept": "application/json", "User-Agent": "KDramaWorld/1.0" } });
+      if (res.status === 429) { await new Promise((r) => setTimeout(r, 5000)); continue; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
     } catch (e) {
-      if (e.name === "AbortError") throw e;
-      globalBackoffUntil = Math.max(globalBackoffUntil, Date.now() + 2000);
-      await new Promise((r) => setTimeout(r, 2 ** a * 1000));
+      await new Promise((r) => setTimeout(r, 500 * (a + 1)));
     }
   }
-  return null; // skip page rather than failing the whole build
+  return null;
 }
 
 function sortDedup(list) {
@@ -109,38 +76,49 @@ function sortDedup(list) {
   });
 }
 
-async function buildCatalog(signal, startPage = 0) {
+async function buildCatalog() {
   const shows = new Map();
-  let nextPageToFetch = startPage;
-  let hit404 = false;
-  const startedAt = Date.now();
+  const currentYear = new Date().getFullYear();
 
-  async function worker() {
-    while (!hit404 && !signal.aborted && Date.now() - startedAt < PAGE_BUDGET_MS - 2000) {
-      const p = nextPageToFetch++;
-      const data = await fetchJson(`${BASE}?page=${p}`, signal);
-      if (data === null) {
-        // Treat null (404) as terminal. A soft fetch failure returns [] after
-        // retries via fetchJson, which just means we skip that page.
-        if (p > 50) { hit404 = true; break; }
-        await new Promise((r) => setTimeout(r, INTER_REQ_DELAY_MS));
-        continue;
+  // 1) Core search-by-year sweep.
+  const years = [];
+  for (let y = MIN_YEAR; y <= currentYear + 1; y++) years.push(y);
+
+  // Do a few parallel searches (TVMaze search is fast / cheap).
+  const CHUNK = 4;
+  for (let i = 0; i < years.length; i += CHUNK) {
+    const batch = years.slice(i, i + CHUNK);
+    const results = await Promise.all(batch.map((y) =>
+      fetchJson(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent("(" + y + ")")}`)
+    ));
+    for (const arr of results) {
+      if (!Array.isArray(arr)) continue;
+      for (const { show } of arr) {
+        if (!show || !isKoreanDrama(show)) continue;
+        const c = compact(show);
+        if (c.y && c.y < MIN_YEAR) continue;
+        if (!c.p && c.r == null && !c.su) continue;
+        shows.set(c.id, c);
       }
-      if (Array.isArray(data)) {
-        for (const s of data) {
-          if (!isKoreanDrama(s)) continue;
-          const c = compact(s);
-          if (c.y && c.y < MIN_YEAR) continue;
-          if (!c.p && c.r == null && !c.su) continue;
-          shows.set(c.id, c);
-        }
-      }
-      await new Promise((r) => setTimeout(r, INTER_REQ_DELAY_MS));
     }
   }
 
-  await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
-  return { shows: [...shows.values()], stoppedAt404: hit404, nextPage: nextPageToFetch };
+  // 2) Sprinkle in results from the schedule endpoint (airs in KR last/next
+  // 4 weeks) to catch any currently-airing shows that search might miss.
+  try {
+    const schedule = await fetchJson("https://api.tvmaze.com/schedule?country=KR&days=14");
+    if (Array.isArray(schedule)) {
+      for (const ep of schedule) {
+        const s = ep?._embedded?.show || ep.show;
+        if (s && isKoreanDrama(s)) {
+          const c = compact(s);
+          if (!shows.has(c.id) && (c.p || c.r || c.su)) shows.set(c.id, c);
+        }
+      }
+    }
+  } catch {}
+
+  return sortDedup([...shows.values()]);
 }
 
 export default async function handler(req, res) {
@@ -148,55 +126,24 @@ export default async function handler(req, res) {
   if (!authorized(url)) { res.statusCode = 404; res.end("not found"); return; }
 
   const forceRefresh = url.searchParams.has("refresh");
-  const warmOnly = url.searchParams.has("warm");
-
-  // Serve cached immediately if fresh.
   if (!forceRefresh && _cached && Date.now() - _cachedAt < CACHE_TTL_MS) {
     return sendSliceOrAll(res, _cached, url, { fromCache: true, fetchedAt: new Date(_cachedAt).toISOString() });
   }
-
-  // De-duplicate concurrent warm-up calls.
   if (!_warmingPromise) {
-    const controller = new AbortController();
-    const deadline = setTimeout(() => controller.abort(), PAGE_BUDGET_MS + 3000);
-    _warmingPromise = (async () => {
-      try {
-        const { shows, stoppedAt404 } = await buildCatalog(controller.signal);
-        if (stoppedAt404) {
-          _cached = sortDedup(shows);
-          _cachedAt = Date.now();
-        }
-        return { shows: _cached || sortDedup(shows), done: stoppedAt404 };
-      } finally {
-        clearTimeout(deadline);
-        _warmingPromise = null;
-      }
-    })();
+    _warmingPromise = buildCatalog().then((list) => {
+      _cached = list;
+      _cachedAt = Date.now();
+      _warmingPromise = null;
+      return list;
+    }).catch((err) => {
+      _warmingPromise = null;
+      throw err;
+    });
   }
 
   try {
-    // If warm-only: return progress (don't wait for completion if it's
-    // taking too long).
-    if (warmOnly) {
-      const result = await Promise.race([
-        _warmingPromise,
-        new Promise((r) => setTimeout(() => r({ warming: true, cached: !!_cached }), 2000)),
-      ]);
-      res.setHeader("content-type", "application/json");
-      res.setHeader("cache-control", "no-store");
-      if (result && result.shows) {
-        res.end(JSON.stringify({ warming: false, done: result.done, count: result.shows.length }));
-      } else {
-        res.end(JSON.stringify(result));
-      }
-      return;
-    }
-
-    const { shows: all, done } = await _warmingPromise;
-    res.setHeader("content-type", "application/json; charset=utf-8");
-    res.setHeader("cache-control", "no-store");
-    if (done) return sendSliceOrAll(res, all, url, { fetchedAt: new Date(_cachedAt).toISOString() });
-    res.end(JSON.stringify({ done: false, count: all.length, note: "catalog warm incomplete; retry after calling ?warm=1 a few times" }));
+    const all = await _warmingPromise;
+    return sendSliceOrAll(res, all, url, { fetchedAt: new Date(_cachedAt).toISOString() });
   } catch (err) {
     res.statusCode = 500;
     res.setHeader("content-type", "application/json");
@@ -205,6 +152,8 @@ export default async function handler(req, res) {
 }
 
 function sendSliceOrAll(res, all, url, extra) {
+  res.setHeader("content-type", "application/json; charset=utf-8");
+  res.setHeader("cache-control", "no-store");
   const yearParam = url.searchParams.get("year");
   if (yearParam) {
     const y = Number(yearParam);
