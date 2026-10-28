@@ -26,6 +26,7 @@ const CURATED_SLUGS = [
   "run-on", "youth-of-may", "daily-dose-of-sunshine", "crash-landing-on-you",
   "mr-sunshine", "mouse", "flower-of-evil", "signal", "healer", "kingdom",
   "sky-castle", "tunnel", "squid-game", "arthdal", "secret-garden", "chicago-typewriter",
+  "strangers-from-hell", "my-love-from-the-star", "whats-wrong-with-secretary-kim",
 ];
 
 function baseOrigin(req) {

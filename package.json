@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "validate": "vitest run tests/validate.seed.test.ts tests/forbidden-sources.test.ts",
     "smoke": "playwright test tests/smoke.spec.ts",
+    "smoke:fetch": "node scripts/smoke-fetch.mjs",
     "audit": "tsx scripts/audit-content.ts",
     "audit:json": "tsx scripts/audit-content.ts --json",
     "screenshots:before": "tsx scripts/screenshot-baseline.ts before",
