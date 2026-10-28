@@ -2,6 +2,7 @@ import { Link, useParams, Navigate } from "react-router-dom";
 import { actors } from "@/data";
 import { useLiveData } from "@/LiveData";
 import DramaCard from "@/components/DramaCard";
+import ActorAvatar from "@/components/ActorAvatar";
 import { useSeo } from "@/lib/seo";
 
 // Map curated actors to slugs of dramas they appear in (manually curated;
@@ -41,10 +42,12 @@ export default function ActorPage() {
           ← All actors
         </Link>
         <div className="mt-6 flex flex-col md:flex-row items-center md:items-start gap-8">
-          <div className="h-36 w-36 rounded-full flex items-center justify-center font-serif text-6xl font-bold gradient-text shrink-0"
-               style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)" }}>
-            {actor.name.replace(/\([^)]+\)/g, "").trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("")}
-          </div>
+          <ActorAvatar
+            name={actor.name}
+            tmdbProfile={actor.tmdbProfile}
+            size={144}
+            className="ring-2 shadow-2xl"
+          />
           <div className="text-center md:text-left">
             <span className="kicker"><span className="dot" />Filmography</span>
             <h1 className="section-title mt-2 text-4xl md:text-6xl font-serif">{actor.name}</h1>

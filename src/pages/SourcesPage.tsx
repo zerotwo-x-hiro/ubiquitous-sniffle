@@ -11,8 +11,8 @@ const SOURCES = [
   {
     name: "TMDB",
     url: "https://www.themoviedb.org/documentation/api",
-    used: "Optional server-side enrichment only when a TMDB_ACCESS_TOKEN is configured. Not used in the browser today.",
-    terms: "Requires API key. Subject to TMDB terms of use; attribution required.",
+    used: "Server-side enrichment for TMDB backdrops, taglines and poster alternatives (/api/enrich). Actor headshots on the Actors index and actor pages are also loaded from TMDB's CDN (image.tmdb.org, w185) — they appear directly in the browser, with a graceful initials fallback if an image fails to load.",
+    terms: "Free v3 keys + premium v4 bearer tokens available. Subject to TMDB terms of use; attribution required (noted below).",
   },
   {
     name: "OMDb",
