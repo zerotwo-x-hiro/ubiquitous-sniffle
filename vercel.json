@@ -6,7 +6,6 @@
   "outputDirectory": "dist",
   "functions": {
     "api/tvmaze/[...path].js": { "maxDuration": 15 },
-    "api/enrich/shows/[tvmazeId].js": { "maxDuration": 15 },
     "api/sitemap.xml.js": { "maxDuration": 10 },
     "api/health.js": { "maxDuration": 10 }
   },
