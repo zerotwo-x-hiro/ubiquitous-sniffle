@@ -82,14 +82,33 @@ function pickRating(show: TvMazeShow): number {
 /** True when a TVMaze show is likely the Korean drama we want. */
 function isKoreanDrama(show: TvMazeShow): boolean {
   const cc = show.network?.country?.code ?? show.webChannel?.country?.code;
-  if (cc === "KR") return true;
-  if ((show.language || "").toLowerCase() === "korean") return true;
-  // Accept shows whose name/summary mention Korean/K-drama explicitly.
-  const blob = (show.name + " " + stripHtml(show.summary)).toLowerCase();
-  if (/korean|k-drama|kdrama|kbs|sbs|mbc|tvn|jtbc|oca|ocn|tving|wavve|kakao|ena/.test(blob)) return true;
-  // Reject known non-KR channels/anime.
   const chan = (show.network?.name || show.webChannel?.name || "").toLowerCase();
-  if (/(at-x|tokyo mx|nhk|fuji tv|tbs|mbs|abema|wowow|weverse|vlive|bbc|itv|comedy central|amc|disney\+|hbo|showtime|oxygen|tnt|zdf|hot3|tv3|show tv|ozone)/.test(chan)) return false;
+  const lang = (show.language || "").toLowerCase();
+
+  // Hard blocklist of non-Korean channels/studios (takes precedence before
+  // any fuzzy keyword matches — e.g. AMC's "Bunny" must not pass because
+  // its network country is US, not KR).
+  if (/(^|\W)(at-x|tokyo mx|nhk|fuji tv|tbs|mbs|abema|wowow|bbc|itv|comedy central|amc|disney\+|hbo|showtime|oxygen|tnt|zdf|hot3|tv3|show tv|ozone|netflix us|hulu|apple tv\+)($|\W)/.test(chan)) return false;
+  // K-pop / variety channels that leak into schedule.
+  if (/(vlive|weverse|v live|kakao tv)/.test(chan)) return false;
+
+  // Strong positive: official country code is KR.
+  if (cc === "KR") return true;
+  // Strong positive: declared language is Korean.
+  if (lang === "korean") return true;
+
+  // If a country code IS declared but it's NOT KR, reject outright
+  // (e.g. US/JP/DE/CN/IN/TR show can't be a K-drama just because someone
+  // tagged "drama" in the summary).
+  if (cc && cc !== "KR") return false;
+
+  // Fuzzy: only accept if name/summary contain an unmistakable Korean
+  // network keyword (tvN, JTBC, SBS, KBS, MBC, OCN, TVING, wavve, Kakao,
+  // ENA) OR explicitly "korean" / "k-drama" / "kdrama".
+  const blob = (show.name + " " + stripHtml(show.summary)).toLowerCase();
+  if (/\b(korean|k-drama|kdrama)\b/.test(blob)) return true;
+  if (/\b(kbs|sbs|mbc|tvn|jtbc|ocn|tving|wavve|kakao|ena)\b/.test(blob)) return true;
+
   return false;
 }
 
