@@ -203,7 +203,12 @@ export const minifeatures: Minifeature[] = [
   { slug: "emotional-damage",     eyebrow: "03 · Tracker",          title: "Emotional Damage Meter",  blurb: "Some dramas end. The damage doesn't. Log exactly how destroyed you were.",      cta: "Explore", accent: "#4aa8ff" },
 ];
 
+// Legacy slug → canonical slug. When a drama is renamed or merged, add an entry
+// here so old shared links (from earlier betas, OG cache, Discord/Twitter
+// previews) keep resolving. Drop entries only after they've been redirecting
+// for ≥ 2 releases.
 export const SLUG_REDIRECTS: Record<string, string> = {
+  // Shelf-suffix variants used in early beta shelves (fantasy/curated/gem/thriller).
   "moon-lovers-f": "moon-lovers",
   "kingdom-f": "kingdom",
   "tunnel-f": "tunnel",
@@ -215,17 +220,6 @@ export const SLUG_REDIRECTS: Record<string, string> = {
   "twinkling-watermelon-gem": "twinkling-watermelon",
   "chicago-typewriter-gem": "chicago-typewriter",
   "business-proposal-c": "business-proposal",
-  "dream-to-you-cs": "",
-  "100-days-of-deception-cs": "",
-  "dream-to-you": "",
-  "100-days-of-deception": "",
-  "reborn-rookie": "",
-  "dive-into-you": "",
-  "bloody-flower": "",
-  "tantara": "",
-  "our-sticky-love": "",
-  "dead-end-job": "",
-  "cs-queen-of-tears": "",
 };
 
 export const PLACEHOLDER_MARKERS = ["placeholder", "coming right up", "(tba)", "(tbd)"];
