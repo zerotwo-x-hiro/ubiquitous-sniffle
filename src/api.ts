@@ -84,9 +84,12 @@ function isKoreanDrama(show: TvMazeShow): boolean {
   const cc = show.network?.country?.code ?? show.webChannel?.country?.code;
   if (cc === "KR") return true;
   if ((show.language || "").toLowerCase() === "korean") return true;
-  // Reject shows whose network/channel is clearly Japanese anime or non-KR.
+  // Accept shows whose name/summary mention Korean/K-drama explicitly.
+  const blob = (show.name + " " + stripHtml(show.summary)).toLowerCase();
+  if (/korean|k-drama|kdrama|kbs|sbs|mbc|tvn|jtbc|oca|ocn|tving|wavve|kakao|ena/.test(blob)) return true;
+  // Reject known non-KR channels/anime.
   const chan = (show.network?.name || show.webChannel?.name || "").toLowerCase();
-  if (/(at-x|tokyo mx|nhk|fuji tv|tbs|mbs|abema|wowow|weverse|vlive)/.test(chan)) return false;
+  if (/(at-x|tokyo mx|nhk|fuji tv|tbs|mbs|abema|wowow|weverse|vlive|bbc|itv|comedy central|amc|disney\+|hbo|showtime|oxygen|tnt|zdf|hot3|tv3|show tv|ozone)/.test(chan)) return false;
   return false;
 }
 
@@ -103,8 +106,7 @@ function yearMatches(show: TvMazeShow, seedYear: number): boolean {
 export async function fetchDramaByTitle(seed: Drama, options?: { episodes?: boolean }): Promise<EnrichedDrama> {
   const { episodes = false } = options ?? {};
 
-  // Prefer direct /shows/:id lookup when we have a known-good TVMaze id —
-  // avoids the Goblin → Goblin Slayer (AT-X anime) class of F1 wrong matches.
+  // Build primary URL: id lookup when we have an id, otherwise singlesearch.
   const useId = typeof seed.tvmazeId === "number" && seed.tvmazeId > 0;
   const url = useId
     ? `${BASE}/shows/${seed.tvmazeId}${episodes ? "?embed=episodes" : ""}`
@@ -122,11 +124,11 @@ export async function fetchDramaByTitle(seed: Drama, options?: { episodes?: bool
     }
     const show: TvMazeShow = await res.json();
 
-    // Validate fuzzy title matches (only for /singlesearch, not id lookups)
-    if (!useId) {
-      if (!isKoreanDrama(show)) return { ...seed };
-      if (!yearMatches(show, seed.year)) return { ...seed };
-    }
+    // ALWAYS validate: reject non-Korean shows and year mismatches regardless
+    // of whether we fetched by id or by title. TVMaze ids can be wrong (e.g.
+    // 4711 is the anime "Goblin Slayer", not the K-drama "Goblin").
+    if (!isKoreanDrama(show)) return { ...seed };
+    if (!yearMatches(show, seed.year)) return { ...seed };
 
     const year = yearFrom(show.premiered) ?? seed.year;
     const runtime = show.averageRuntime ?? show.runtime;
