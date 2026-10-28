@@ -84,6 +84,11 @@ function normTitle(s: string): string {
   return (s || "").toLowerCase().replace(/[^a-z0-9가-힣]/g, "");
 }
 
+/** Split title into normalised word tokens (>=3 chars). */
+function titleTokens(s: string): string[] {
+  return (s || "").toLowerCase().split(/[^a-z0-9가-힣]+/).filter((t) => t.length >= 3);
+}
+
 /** True when a TVMaze show is likely the Korean drama we want. */
 function isKoreanDrama(show: TvMazeShow, seed?: Drama): boolean {
   const cc = show.network?.country?.code ?? show.webChannel?.country?.code;
@@ -98,22 +103,21 @@ function isKoreanDrama(show: TvMazeShow, seed?: Drama): boolean {
   // If country code is declared and it's NOT KR -> reject outright.
   if (cc && cc !== "KR") return false;
 
-  // Title sanity: if seed title is provided, require fuzzy name match.
-  // Prevents TVMaze /singlesearch from returning unrelated shows (e.g.
-  // "Crash Landing on You" -> AMC's "Bunny") when the API ignores the query.
+  // Title sanity: if seed title is provided, require the returned TVMaze show
+  // name to have some lexical overlap (stops /singlesearch returning unrelated
+  // shows like "Crash Landing on You" -> AMC "Bunny", "Secret Garden" ->
+  // Smithsonian "Mystery Files").
   if (seed && show.name) {
-    const a = normTitle(seed.title);
-    const b = normTitle(show.name);
-    // Accept if either contains the other, or they share a long enough token.
-    if (!(a.includes(b) || b.includes(a))) {
-      // Try word overlap: at least one substantive token (>=4 chars) in common.
-      const aTokens = new Set(a.split(/\s+/).filter((t) => t.length >= 4));
-      const bTokens = new Set(b.split(/\s+/).filter((t) => t.length >= 4));
-      let shared = 0;
-      aTokens.forEach((t) => { if (bTokens.has(t)) shared++; });
-      // Require at least one shared substantive token.
-      if (shared === 0 && a.length >= 6 && b.length >= 6) return false;
-    }
+    const aNorm = normTitle(seed.title);
+    const bNorm = normTitle(show.name);
+    const aToks = titleTokens(seed.title);
+    const bToks = titleTokens(show.name);
+    const bSet = new Set(bToks);
+    const sharedTok = aToks.some((t) => bSet.has(t));
+    const contains = aNorm.length >= 3 && bNorm.length >= 3 && (aNorm.includes(bNorm) || bNorm.includes(aNorm));
+    // Must share at least one word OR one contain the other. Otherwise the
+    // API returned a semantically unrelated show: fall back to curated seed.
+    if (!sharedTok && !contains && aNorm.length >= 5 && bNorm.length >= 5) return false;
   }
 
   // Accept: official country == KR OR language == Korean.
