@@ -1,0 +1,1642 @@
+{
+  "generated": "2026-10-28T09:30:30.040Z",
+  "total": 90,
+  "issues": [
+    {
+      "slug": "my-mister",
+      "title": "My Mister",
+      "sections": [
+        "featured"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"My Mister\" (year 2018)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "when-life-gives-you-tangerines",
+      "title": "When Life Gives You Tangerines",
+      "sections": [
+        "discover"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"When Life Gives You Tangerines\" (year 2025)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "twinkling-watermelon",
+      "title": "Twinkling Watermelon",
+      "sections": [
+        "discover"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Twinkling Watermelon\" (year 2023)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "reply-1988",
+      "title": "Reply 1988",
+      "sections": [
+        "discover"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Reply 1988\" (year 2015)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "lovely-runner",
+      "title": "Lovely Runner",
+      "sections": [
+        "discover"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Lovely Runner\" (year 2024)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "alchemy-of-souls",
+      "title": "Alchemy of Souls",
+      "sections": [
+        "discover"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Alchemy of Souls\" (year 2022)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "hospital-playlist",
+      "title": "Hospital Playlist",
+      "sections": [
+        "discover"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Hospital Playlist\" (year 2020)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "goblin",
+      "title": "Goblin",
+      "sections": [
+        "discover"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Goblin\" (year 2016)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "marry-my-husband",
+      "title": "Marry My Husband",
+      "sections": [
+        "discover"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Marry My Husband\" (year 2024)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "business-proposal",
+      "title": "Business Proposal",
+      "sections": [
+        "discover"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Business Proposal\" (year 2022)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "extraordinary-attorney-woo",
+      "title": "Extraordinary Attorney Woo",
+      "sections": [
+        "discover"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Extraordinary Attorney Woo\" (year 2022)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "the-glory",
+      "title": "The Glory",
+      "sections": [
+        "discover"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"The Glory\" (year 2022)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "twenty-five-twenty-one",
+      "title": "Twenty-Five Twenty-One",
+      "sections": [
+        "discover"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Twenty-Five Twenty-One\" (year 2022)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "reborn-rookie",
+      "title": "Reborn Rookie",
+      "sections": [
+        "recent (2026 slate)"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Reborn Rookie\" (year 2026)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "dive-into-you",
+      "title": "Dive into You",
+      "sections": [
+        "recent (2026 slate)"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Dive into You\" (year 2026)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "bloody-flower",
+      "title": "Bloody Flower",
+      "sections": [
+        "recent (2026 slate)"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Bloody Flower\" (year 2026)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "tantara",
+      "title": "Tantara",
+      "sections": [
+        "recent (2026 slate)"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Tantara\" (year 2026)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "dream-to-you",
+      "title": "Dream to You",
+      "sections": [
+        "recent (2026 slate)"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Dream to You\" (year 2026)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "our-sticky-love",
+      "title": "Our Sticky Love",
+      "sections": [
+        "recent (2026 slate)"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Our Sticky Love\" (year 2026)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "100-days-of-deception",
+      "title": "100 Days of Deception",
+      "sections": [
+        "recent (2026 slate)"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"100 Days of Deception\" (year 2026)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "dead-end-job",
+      "title": "Dead-End Job",
+      "sections": [
+        "recent (2026 slate)"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Dead-End Job\" (year 2026)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "crash-landing-on-you",
+      "title": "Crash Landing on You",
+      "sections": [
+        "romance"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Crash Landing on You\" (year 2019)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "my-dearest",
+      "title": "My Dearest",
+      "sections": [
+        "romance"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"My Dearest\" (year 2023)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "mr-sunshine",
+      "title": "Mr. Sunshine",
+      "sections": [
+        "romance"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Mr. Sunshine\" (year 2018)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "moon-lovers",
+      "title": "Moon Lovers: Scarlet Heart Ryeo",
+      "sections": [
+        "romance"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Moon Lovers: Scarlet Heart Ryeo\" (year 2016)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "mouse",
+      "title": "Mouse",
+      "sections": [
+        "thrillers"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Mouse\" (year 2021)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "flower-of-evil",
+      "title": "Flower of Evil",
+      "sections": [
+        "thrillers"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Flower of Evil\" (year 2020)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "signal",
+      "title": "Signal",
+      "sections": [
+        "thrillers"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Signal\" (year 2016)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "healer",
+      "title": "Healer",
+      "sections": [
+        "thrillers"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Healer\" (year 2014)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "kingdom",
+      "title": "Kingdom",
+      "sections": [
+        "thrillers"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Kingdom\" (year 2019)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "sky-castle",
+      "title": "SKY Castle",
+      "sections": [
+        "thrillers"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"SKY Castle\" (year 2018)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "tunnel-thriller",
+      "title": "Tunnel",
+      "sections": [
+        "thrillers"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Tunnel\" (year 2017)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "squid-game",
+      "title": "Squid Game",
+      "sections": [
+        "thrillers"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Squid Game\" (year 2021)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "moon-lovers-f",
+      "title": "Moon Lovers: Scarlet Heart Ryeo",
+      "sections": [
+        "fantasy"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Moon Lovers: Scarlet Heart Ryeo\" (year 2016)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "kingdom-f",
+      "title": "Kingdom",
+      "sections": [
+        "fantasy"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Kingdom\" (year 2019)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "arthdal",
+      "title": "Arthdal Chronicles",
+      "sections": [
+        "fantasy"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Arthdal Chronicles\" (year 2019)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "tunnel-f",
+      "title": "Tunnel",
+      "sections": [
+        "fantasy"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Tunnel\" (year 2017)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "secret-garden",
+      "title": "Secret Garden",
+      "sections": [
+        "fantasy"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Secret Garden\" (year 2010)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "chicago-typewriter",
+      "title": "Chicago Typewriter",
+      "sections": [
+        "fantasy"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Chicago Typewriter\" (year 2017)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "family-register",
+      "title": "Family Register",
+      "sections": [
+        "comingSoon"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Family Register\" (year 2026)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "doctor-x-mafia",
+      "title": "Doctor X: Mafia in White",
+      "sections": [
+        "comingSoon"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Doctor X: Mafia in White\" (year 2026)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "dream-to-you-cs",
+      "title": "Dream to You",
+      "sections": [
+        "comingSoon"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Dream to You\" (year 2026)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "teach-you-a-lesson",
+      "title": "Teach You a Lesson",
+      "sections": [
+        "comingSoon"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Teach You a Lesson\" (year 2026)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "100-days-of-deception-cs",
+      "title": "100 Days of Deception",
+      "sections": [
+        "comingSoon"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"100 Days of Deception\" (year 2026)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "four-hands",
+      "title": "Four Hands, Two Sonatas",
+      "sections": [
+        "comingSoon"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Four Hands, Two Sonatas\" (year 2026)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "honour",
+      "title": "Honour",
+      "sections": [
+        "comingSoon"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Honour\" (year 2026)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "between-steps",
+      "title": "Between Steps",
+      "sections": [
+        "comingSoon"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Between Steps\" (year 2026)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "choi-soo-jong",
+      "title": "(missing title)",
+      "sections": [],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"(missing title)\" (year ?)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "lee-dong-wook",
+      "title": "(missing title)",
+      "sections": [],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"(missing title)\" (year ?)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "ryu-jin",
+      "title": "(missing title)",
+      "sections": [],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"(missing title)\" (year ?)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "ji-seong",
+      "title": "(missing title)",
+      "sections": [],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"(missing title)\" (year ?)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "joo-sang-wook",
+      "title": "(missing title)",
+      "sections": [],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"(missing title)\" (year ?)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "jang-hyeok",
+      "title": "(missing title)",
+      "sections": [],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"(missing title)\" (year ?)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "gong-hyo-jin",
+      "title": "(missing title)",
+      "sections": [],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"(missing title)\" (year ?)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "kim-go-eun",
+      "title": "(missing title)",
+      "sections": [],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"(missing title)\" (year ?)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "romance",
+      "title": "(missing title)",
+      "sections": [],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"(missing title)\" (year ?)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "comedy",
+      "title": "(missing title)",
+      "sections": [],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"(missing title)\" (year ?)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "mystery",
+      "title": "(missing title)",
+      "sections": [],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"(missing title)\" (year ?)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "crime",
+      "title": "(missing title)",
+      "sections": [],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"(missing title)\" (year ?)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "sci-fi-and-fantasy",
+      "title": "(missing title)",
+      "sections": [],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"(missing title)\" (year ?)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "family",
+      "title": "(missing title)",
+      "sections": [],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"(missing title)\" (year ?)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "thriller",
+      "title": "(missing title)",
+      "sections": [],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"(missing title)\" (year ?)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "historical",
+      "title": "(missing title)",
+      "sections": [],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"(missing title)\" (year ?)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "the-all-time-greats",
+      "title": "The All-Time Greats",
+      "sections": [
+        "collections"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"The All-Time Greats\" (year 2018)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "my-mister-c",
+      "title": "My Mister",
+      "sections": [
+        "collections"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"My Mister\" (year 2018)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "reply-1988-c",
+      "title": "Reply 1988",
+      "sections": [
+        "collections"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Reply 1988\" (year 2015)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "mr-sunshine-c",
+      "title": "Mr. Sunshine",
+      "sections": [
+        "collections"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Mr. Sunshine\" (year 2018)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "my-liberation-notes",
+      "title": "My Liberation Notes",
+      "sections": [
+        "collections"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"My Liberation Notes\" (year 2022)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "signal-c",
+      "title": "Signal",
+      "sections": [
+        "collections"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Signal\" (year 2016)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "hidden-gems",
+      "title": "Hidden Gems",
+      "sections": [
+        "collections"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Hidden Gems\" (year 2020)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "run-on",
+      "title": "Run On",
+      "sections": [
+        "collections"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Run On\" (year 2020)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "youth-of-may",
+      "title": "Youth of May",
+      "sections": [
+        "collections"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Youth of May\" (year 2021)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "daily-dose-of-sunshine",
+      "title": "Daily Dose of Sunshine",
+      "sections": [
+        "collections"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Daily Dose of Sunshine\" (year 2023)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "twinkling-watermelon-gem",
+      "title": "Twinkling Watermelon",
+      "sections": [
+        "collections"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Twinkling Watermelon\" (year 2023)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "chicago-typewriter-gem",
+      "title": "Chicago Typewriter",
+      "sections": [
+        "collections"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Chicago Typewriter\" (year 2017)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "perfect-romantic-comedies",
+      "title": "Perfect Romantic Comedies",
+      "sections": [
+        "collections"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Perfect Romantic Comedies\" (year 2007)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "coffee-prince",
+      "title": "Coffee Prince",
+      "sections": [
+        "collections"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Coffee Prince\" (year 2007)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "weightlifting-fairy",
+      "title": "Weightlifting Fairy Kim Bok-joo",
+      "sections": [
+        "collections"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Weightlifting Fairy Kim Bok-joo\" (year 2016)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "fight-for-my-way",
+      "title": "Fight for My Way",
+      "sections": [
+        "collections"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Fight for My Way\" (year 2017)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "business-proposal-c",
+      "title": "Business Proposal",
+      "sections": [
+        "collections"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Business Proposal\" (year 2022)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "whats-wrong-secretary-kim",
+      "title": "What's Wrong with Secretary Kim",
+      "sections": [
+        "collections"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"What's Wrong with Secretary Kim\" (year 2018)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "into-the-ring",
+      "title": "Into the Ring",
+      "sections": [
+        "recentlyAdded"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Into the Ring\" (year 2020)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "romance-talking",
+      "title": "Romance, Talking",
+      "sections": [
+        "recentlyAdded"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Romance, Talking\" (year 2020)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "the-world-of-my-17",
+      "title": "The World of My 17",
+      "sections": [
+        "recentlyAdded"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"The World of My 17\" (year 2020)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "going-out",
+      "title": "Going Out",
+      "sections": [
+        "recentlyAdded"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Going Out\" (year 2020)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "wind-clouds-rain",
+      "title": "Wind, Clouds and Rain",
+      "sections": [
+        "recentlyAdded"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Wind, Clouds and Rain\" (year 2020)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "like",
+      "title": "Like",
+      "sections": [
+        "recentlyAdded"
+      ],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Like\" (year 2019)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "midnight-watchlist",
+      "title": "Midnight Watchlist",
+      "sections": [],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Midnight Watchlist\" (year ?)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "second-lead-syndrome",
+      "title": "Second Lead Syndrome",
+      "sections": [],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Second Lead Syndrome\" (year ?)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    },
+    {
+      "slug": "emotional-damage",
+      "title": "Emotional Damage Meter",
+      "sections": [],
+      "kind": "no-tvmaze-match",
+      "severity": "P1",
+      "detail": "No Korean-language TVMaze show found for title \"Emotional Damage Meter\" (year ?)",
+      "fix": "Add explicit tvmazeId override in catalog.overrides.json or remove/fix seed."
+    }
+  ],
+  "rows": [
+    {
+      "slug": "my-mister",
+      "title": "My Mister",
+      "sections": [
+        "featured"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "when-life-gives-you-tangerines",
+      "title": "When Life Gives You Tangerines",
+      "sections": [
+        "discover"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "twinkling-watermelon",
+      "title": "Twinkling Watermelon",
+      "sections": [
+        "discover"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "reply-1988",
+      "title": "Reply 1988",
+      "sections": [
+        "discover"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "lovely-runner",
+      "title": "Lovely Runner",
+      "sections": [
+        "discover"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "alchemy-of-souls",
+      "title": "Alchemy of Souls",
+      "sections": [
+        "discover"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "hospital-playlist",
+      "title": "Hospital Playlist",
+      "sections": [
+        "discover"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "goblin",
+      "title": "Goblin",
+      "sections": [
+        "discover"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "marry-my-husband",
+      "title": "Marry My Husband",
+      "sections": [
+        "discover"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "business-proposal",
+      "title": "Business Proposal",
+      "sections": [
+        "discover"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "extraordinary-attorney-woo",
+      "title": "Extraordinary Attorney Woo",
+      "sections": [
+        "discover"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "the-glory",
+      "title": "The Glory",
+      "sections": [
+        "discover"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "twenty-five-twenty-one",
+      "title": "Twenty-Five Twenty-One",
+      "sections": [
+        "discover"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "reborn-rookie",
+      "title": "Reborn Rookie",
+      "sections": [
+        "recent (2026 slate)"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "dive-into-you",
+      "title": "Dive into You",
+      "sections": [
+        "recent (2026 slate)"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "bloody-flower",
+      "title": "Bloody Flower",
+      "sections": [
+        "recent (2026 slate)"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "tantara",
+      "title": "Tantara",
+      "sections": [
+        "recent (2026 slate)"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "dream-to-you",
+      "title": "Dream to You",
+      "sections": [
+        "recent (2026 slate)"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "our-sticky-love",
+      "title": "Our Sticky Love",
+      "sections": [
+        "recent (2026 slate)"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "100-days-of-deception",
+      "title": "100 Days of Deception",
+      "sections": [
+        "recent (2026 slate)"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "dead-end-job",
+      "title": "Dead-End Job",
+      "sections": [
+        "recent (2026 slate)"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "crash-landing-on-you",
+      "title": "Crash Landing on You",
+      "sections": [
+        "romance"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "my-dearest",
+      "title": "My Dearest",
+      "sections": [
+        "romance"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "mr-sunshine",
+      "title": "Mr. Sunshine",
+      "sections": [
+        "romance"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "moon-lovers",
+      "title": "Moon Lovers: Scarlet Heart Ryeo",
+      "sections": [
+        "romance"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "mouse",
+      "title": "Mouse",
+      "sections": [
+        "thrillers"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "flower-of-evil",
+      "title": "Flower of Evil",
+      "sections": [
+        "thrillers"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "signal",
+      "title": "Signal",
+      "sections": [
+        "thrillers"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "healer",
+      "title": "Healer",
+      "sections": [
+        "thrillers"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "kingdom",
+      "title": "Kingdom",
+      "sections": [
+        "thrillers"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "sky-castle",
+      "title": "SKY Castle",
+      "sections": [
+        "thrillers"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "tunnel-thriller",
+      "title": "Tunnel",
+      "sections": [
+        "thrillers"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "squid-game",
+      "title": "Squid Game",
+      "sections": [
+        "thrillers"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "moon-lovers-f",
+      "title": "Moon Lovers: Scarlet Heart Ryeo",
+      "sections": [
+        "fantasy"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "kingdom-f",
+      "title": "Kingdom",
+      "sections": [
+        "fantasy"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "arthdal",
+      "title": "Arthdal Chronicles",
+      "sections": [
+        "fantasy"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "tunnel-f",
+      "title": "Tunnel",
+      "sections": [
+        "fantasy"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "secret-garden",
+      "title": "Secret Garden",
+      "sections": [
+        "fantasy"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "chicago-typewriter",
+      "title": "Chicago Typewriter",
+      "sections": [
+        "fantasy"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "family-register",
+      "title": "Family Register",
+      "sections": [
+        "comingSoon"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "doctor-x-mafia",
+      "title": "Doctor X: Mafia in White",
+      "sections": [
+        "comingSoon"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "dream-to-you-cs",
+      "title": "Dream to You",
+      "sections": [
+        "comingSoon"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "teach-you-a-lesson",
+      "title": "Teach You a Lesson",
+      "sections": [
+        "comingSoon"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "100-days-of-deception-cs",
+      "title": "100 Days of Deception",
+      "sections": [
+        "comingSoon"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "four-hands",
+      "title": "Four Hands, Two Sonatas",
+      "sections": [
+        "comingSoon"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "honour",
+      "title": "Honour",
+      "sections": [
+        "comingSoon"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "between-steps",
+      "title": "Between Steps",
+      "sections": [
+        "comingSoon"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "choi-soo-jong",
+      "title": "(missing title)",
+      "sections": [],
+      "tvmaze": null
+    },
+    {
+      "slug": "lee-dong-wook",
+      "title": "(missing title)",
+      "sections": [],
+      "tvmaze": null
+    },
+    {
+      "slug": "ryu-jin",
+      "title": "(missing title)",
+      "sections": [],
+      "tvmaze": null
+    },
+    {
+      "slug": "ji-seong",
+      "title": "(missing title)",
+      "sections": [],
+      "tvmaze": null
+    },
+    {
+      "slug": "joo-sang-wook",
+      "title": "(missing title)",
+      "sections": [],
+      "tvmaze": null
+    },
+    {
+      "slug": "jang-hyeok",
+      "title": "(missing title)",
+      "sections": [],
+      "tvmaze": null
+    },
+    {
+      "slug": "gong-hyo-jin",
+      "title": "(missing title)",
+      "sections": [],
+      "tvmaze": null
+    },
+    {
+      "slug": "kim-go-eun",
+      "title": "(missing title)",
+      "sections": [],
+      "tvmaze": null
+    },
+    {
+      "slug": "romance",
+      "title": "(missing title)",
+      "sections": [],
+      "tvmaze": null
+    },
+    {
+      "slug": "comedy",
+      "title": "(missing title)",
+      "sections": [],
+      "tvmaze": null
+    },
+    {
+      "slug": "mystery",
+      "title": "(missing title)",
+      "sections": [],
+      "tvmaze": null
+    },
+    {
+      "slug": "crime",
+      "title": "(missing title)",
+      "sections": [],
+      "tvmaze": null
+    },
+    {
+      "slug": "sci-fi-and-fantasy",
+      "title": "(missing title)",
+      "sections": [],
+      "tvmaze": null
+    },
+    {
+      "slug": "family",
+      "title": "(missing title)",
+      "sections": [],
+      "tvmaze": null
+    },
+    {
+      "slug": "thriller",
+      "title": "(missing title)",
+      "sections": [],
+      "tvmaze": null
+    },
+    {
+      "slug": "historical",
+      "title": "(missing title)",
+      "sections": [],
+      "tvmaze": null
+    },
+    {
+      "slug": "the-all-time-greats",
+      "title": "The All-Time Greats",
+      "sections": [
+        "collections"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "my-mister-c",
+      "title": "My Mister",
+      "sections": [
+        "collections"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "reply-1988-c",
+      "title": "Reply 1988",
+      "sections": [
+        "collections"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "mr-sunshine-c",
+      "title": "Mr. Sunshine",
+      "sections": [
+        "collections"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "my-liberation-notes",
+      "title": "My Liberation Notes",
+      "sections": [
+        "collections"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "signal-c",
+      "title": "Signal",
+      "sections": [
+        "collections"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "hidden-gems",
+      "title": "Hidden Gems",
+      "sections": [
+        "collections"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "run-on",
+      "title": "Run On",
+      "sections": [
+        "collections"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "youth-of-may",
+      "title": "Youth of May",
+      "sections": [
+        "collections"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "daily-dose-of-sunshine",
+      "title": "Daily Dose of Sunshine",
+      "sections": [
+        "collections"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "twinkling-watermelon-gem",
+      "title": "Twinkling Watermelon",
+      "sections": [
+        "collections"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "chicago-typewriter-gem",
+      "title": "Chicago Typewriter",
+      "sections": [
+        "collections"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "perfect-romantic-comedies",
+      "title": "Perfect Romantic Comedies",
+      "sections": [
+        "collections"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "coffee-prince",
+      "title": "Coffee Prince",
+      "sections": [
+        "collections"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "weightlifting-fairy",
+      "title": "Weightlifting Fairy Kim Bok-joo",
+      "sections": [
+        "collections"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "fight-for-my-way",
+      "title": "Fight for My Way",
+      "sections": [
+        "collections"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "business-proposal-c",
+      "title": "Business Proposal",
+      "sections": [
+        "collections"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "whats-wrong-secretary-kim",
+      "title": "What's Wrong with Secretary Kim",
+      "sections": [
+        "collections"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "into-the-ring",
+      "title": "Into the Ring",
+      "sections": [
+        "recentlyAdded"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "romance-talking",
+      "title": "Romance, Talking",
+      "sections": [
+        "recentlyAdded"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "the-world-of-my-17",
+      "title": "The World of My 17",
+      "sections": [
+        "recentlyAdded"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "going-out",
+      "title": "Going Out",
+      "sections": [
+        "recentlyAdded"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "wind-clouds-rain",
+      "title": "Wind, Clouds and Rain",
+      "sections": [
+        "recentlyAdded"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "like",
+      "title": "Like",
+      "sections": [
+        "recentlyAdded"
+      ],
+      "tvmaze": null
+    },
+    {
+      "slug": "midnight-watchlist",
+      "title": "Midnight Watchlist",
+      "sections": [],
+      "tvmaze": null
+    },
+    {
+      "slug": "second-lead-syndrome",
+      "title": "Second Lead Syndrome",
+      "sections": [],
+      "tvmaze": null
+    },
+    {
+      "slug": "emotional-damage",
+      "title": "Emotional Damage Meter",
+      "sections": [],
+      "tvmaze": null
+    }
+  ]
+}
