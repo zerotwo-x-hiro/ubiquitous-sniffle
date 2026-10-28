@@ -28,7 +28,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <div className="glass-strong rounded-2xl p-8 max-w-md text-center">
             <div className="text-5xl mb-3">🌸</div>
             <h2 className="section-title text-2xl mb-2">Something went wrong</h2>
-            <p className="text-white/70 text-sm mb-5">
+            <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>
               {this.props.fallbackLabel ?? "This section"} didn't render. You can retry, or head back home.
             </p>
             <div className="flex gap-2 justify-center">
@@ -40,7 +40,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </a>
             </div>
             {this.state.message && (
-              <pre className="mt-4 text-[10px] text-white/50 whitespace-pre-wrap break-words">
+              <pre className="mt-4 text-[10px] whitespace-pre-wrap break-words" style={{ color: "var(--text-dim)" }}>
                 {this.state.message}
               </pre>
             )}

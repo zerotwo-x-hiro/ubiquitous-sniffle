@@ -59,7 +59,7 @@ function NotFoundPage() {
     <section className="relative z-10 px-4 md:px-8 lg:px-12 py-20 max-w-xl mx-auto text-center">
       <div className="text-7xl md:text-8xl font-serif italic gradient-text mb-4">404</div>
       <h1 className="section-title text-3xl md:text-4xl mb-3">Page not found</h1>
-      <p className="text-white/70 mb-8">
+      <p className="mb-8" style={{ color: "var(--text-muted)" }}>
         That URL doesn't live here. The drama you're looking for may not be in the archive yet, or the link may be stale.
       </p>
       <Link to="/" className="btn-primary h-11 px-6 rounded-xl inline-flex items-center gap-2 font-semibold">

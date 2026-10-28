@@ -35,8 +35,9 @@ export default function ActorAvatar({ name, tmdbProfile, size = 96, className = 
         width: size,
         height: size,
         fontSize,
-        background: "rgba(255,255,255,0.06)",
-        border: ring ? "1px solid rgba(255,255,255,0.14)" : "none",
+        background: "var(--surface)",
+        border: ring ? "1px solid var(--border-strong)" : "none",
+        color: "var(--text)",
         backdropFilter: "blur(6px)",
       }}
       aria-hidden={false}

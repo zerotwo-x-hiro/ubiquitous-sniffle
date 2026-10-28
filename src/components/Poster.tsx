@@ -1,83 +1,21 @@
-import { useState } from "react";
-import type { Drama } from "@/data";
-import type { EnrichedDrama } from "@/api";
-import { deriveStatus, canDisplayRating } from "@/lib/status";
+import type { AnyDrama } from "@/LiveData";
 
-type Props = { drama: Drama | EnrichedDrama; className?: string; showTitle?: boolean; size?: "sm" | "md" | "lg" };
+type Props = { drama: AnyDrama; size?: string; showTitle?: boolean; className?: string; [key: string]: any };
 
-function hasPoster(d: Drama | EnrichedDrama): d is EnrichedDrama {
-  return typeof (d as EnrichedDrama).poster === "string" && (d as EnrichedDrama).poster!.length > 0;
-}
-
-export default function Poster({ drama, className = "", showTitle = true, size = "md" }: Props) {
-  const h = size === "sm" ? "h-56" : size === "lg" ? "h-80" : "h-72";
-  const [imgLoaded, setImgLoaded] = useState(false);
-  const [imgError, setImgError] = useState(false);
-  const showImg = hasPoster(drama) && !imgError;
-
-  const tvStatus = (drama as EnrichedDrama).status;
-  const status = deriveStatus({
-    status: tvStatus,
-    premiered: drama.year ? `${drama.year}-01-01` : undefined,
-    ended: tvStatus === "Ended" && drama.year ? `${drama.year}-12-31` : undefined,
-  });
-  const showRating = canDisplayRating(status, drama.rating) && drama.rating > 0;
-
+// Netflix-style standalone poster for the drama detail page.
+export default function Poster({ drama }: Props) {
+  const d = drama as any;
+  const poster = d.poster || d.posterOriginal || null;
   return (
-    <div className={`poster relative overflow-hidden ${drama.art} ${h} w-full ${className}`} role="img" aria-label={drama.title}>
-      {/* Real poster image (lazy) */}
-      {showImg && (
+    <div className={`poster aspect-[2/3] w-full max-w-[320px] ${drama.art} rounded-md shadow-2xl overflow-hidden relative`}>
+      {poster ? (
         <img
-          src={drama.poster}
+          src={poster}
           alt={drama.title}
-          loading="lazy"
-          decoding="async"
-          onLoad={() => setImgLoaded(true)}
-          onError={() => setImgError(true)}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+          className="absolute inset-0 w-full h-full object-cover"
+          onError={(e) => ((e.target as HTMLImageElement).style.display = "none")}
         />
-      )}
-
-      {/* Darken/blend overlay over poster to keep title readable */}
-      <div className="absolute inset-0 opacity-40 mix-blend-overlay"
-           style={{ backgroundImage: "radial-gradient(circle at 20% 10%, rgba(255,255,255,.35), transparent 40%), radial-gradient(circle at 80% 90%, rgba(0,0,0,.55), transparent 50%)" }} />
-      {showImg && imgLoaded && (
-        <div className="absolute inset-0"
-             style={{ background: "linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,.55) 100%)" }} />
-      )}
-
-      <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full blur-2xl opacity-50 aurora"
-           style={{ background: "radial-gradient(circle, rgba(255,255,255,.35), transparent 60%)" }} />
-
-      <span className="absolute top-2 left-2 rating-pill text-white text-[11px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 z-10">
-        {showRating ? (
-          <>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="#ffc464" aria-hidden>
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.43 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/>
-            </svg>
-            {drama.rating.toFixed(1)}
-          </>
-        ) : status === "upcoming" ? (
-          <span className="text-pink-200/90 uppercase tracking-widest text-[10px]">Soon</span>
-        ) : (
-          <span className="text-white/80 uppercase tracking-widest text-[10px]">{status === "airing" ? "Airing" : "Ended"}</span>
-        )}
-      </span>
-      {drama.network && (
-        <span className="absolute top-2 right-2 pill rounded-full px-2 py-0.5 text-[10px] uppercase tracking-widest text-white/90 z-10 backdrop-blur-sm bg-black/30">
-          {drama.network}
-        </span>
-      )}
-      {showTitle && (
-        <div className="title-plate z-10">
-          <div className="text-[10px] uppercase tracking-[0.18em] text-white/80 mb-1 flex items-center gap-2">
-            <span>{drama.year}</span>
-            {drama.episodes && <><span>·</span><span className="font-hangul text-[10px] tracking-normal" style={{fontSize:10}}>{drama.episodes}부작</span></>}
-          </div>
-          <div className="text-lg leading-tight drop-shadow-lg">{drama.title}</div>
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }
-

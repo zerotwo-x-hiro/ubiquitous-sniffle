@@ -87,33 +87,33 @@ export default function DramaPage() {
           <img src={backdrop} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover opacity-50" />
         )}
         <div className="absolute inset-0"
-             style={{background:"linear-gradient(120deg, rgba(11,6,20,.92) 10%, rgba(11,6,20,.65) 60%, rgba(11,6,20,.3) 100%)"}} />
-        <div className="absolute -top-20 -right-20 w-[500px] h-[500px] rounded-full blur-3xl opacity-50 aurora"
-             style={{background:"radial-gradient(circle,#ff5ea8,transparent 60%)"}} />
-        <div className="relative grid md:grid-cols-[280px_1fr] gap-8 p-6 md:p-10 items-start rise">
+             style={{background:"var(--hero-side)"}} />
+        <div className="absolute -top-20 -right-20 w-[500px] h-[500px] rounded-full blur-3xl opacity-40 aurora"
+             style={{background:"radial-gradient(circle, var(--accent), transparent 60%)"}} />
+        <div className="relative grid md:grid-cols-[280px_1fr] gap-8 p-6 md:p-10 items-start rise" style={{ color: "#fff" }}>
           <div className="mx-auto md:mx-0 w-[220px] md:w-full">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl floaty" style={{border:"1px solid rgba(255,255,255,.1)"}}>
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl floaty" style={{border:"1px solid rgba(255,255,255,.15)"}}>
               <Poster drama={drama} size="lg" showTitle={false} className="!rounded-none !h-[330px]" />
             </div>
           </div>
           <div>
-            <span className="kicker"><span className="dot"/>{drama.network ?? "KDramaWorld"}</span>
-            <h1 className="section-title mt-4 text-4xl md:text-6xl leading-tight text-white">
+            <span className="kicker" style={{ color: "rgba(255,255,255,0.7)" }}><span className="dot" style={{ background: "var(--accent)" }}/>{drama.network ?? "KDramaWorld"}</span>
+            <h1 className="section-title mt-4 text-4xl md:text-6xl leading-tight" style={{ color: "#fff", textShadow: "0 4px 22px rgba(0,0,0,0.6)" }}>
               {words.map((w,i)=>(
                 <span key={i} className={i === words.length-1 ? "gradient-text italic" : ""}>
                   {w}{" "}
                 </span>
               ))}
             </h1>
-            <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-white/80">
+            <div className="mt-4 flex flex-wrap items-center gap-2 text-sm" style={{ color: "rgba(255,255,255,0.85)" }}>
               <span className="rating-pill px-2.5 py-1 rounded-full flex items-center gap-1.5 font-semibold">
                 {canDisplayRating(status, drama.rating) ? (
                   <>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffc464"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.43 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
-                    {drama.rating.toFixed(1)} <span className="text-white/60 text-[11px] ml-1 font-normal">TVMaze</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--gold)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.43 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+                    {drama.rating.toFixed(1)} <span style={{ color:"rgba(255,255,255,0.6)" }} className="text-[11px] ml-1 font-normal">TVMaze</span>
                   </>
                 ) : (
-                  <span className="text-pink-200/90 uppercase tracking-widest text-[10px]">Not rated yet</span>
+                  <span className="uppercase tracking-widest text-[10px]" style={{ color: "var(--accent-2)" }}>Not rated yet</span>
                 )}
               </span>
               {imdbRating != null && imdbVotes != null && (
@@ -121,21 +121,21 @@ export default function DramaPage() {
                       style={{ background: "rgba(245,197,24,.18)", border: "1px solid rgba(245,197,24,.35)" }}>
                   <span style={{ color:"#f5c518", fontWeight:800, letterSpacing:-.5, fontSize:12, lineHeight:1 }}>IMDb</span>
                   {imdbRating.toFixed(1)}
-                  <span className="text-white/60 text-[11px] ml-0.5 font-normal">
+                  <span style={{ color:"rgba(255,255,255,0.6)" }} className="text-[11px] ml-0.5 font-normal">
                     {imdbVotes >= 1000 ? `${(imdbVotes/1000).toFixed(imdbVotes < 10000 ? 1 : 0)}k` : String(imdbVotes)} votes
                   </span>
                 </span>
               )}
-              <span className="opacity-80">·</span><span>{drama.year}</span>
-              {drama.episodes && <><span className="opacity-80">·</span><span>{drama.episodes} <span className="font-hangul text-xs tracking-normal opacity-90">부작</span></span></>}
-              {runtime && <><span className="opacity-80">·</span><span>{runtime} min/ep</span></>}
-              <span className="opacity-80">·</span>
-              <span className="pill rounded-full px-2 py-0.5 text-xs">{statusLabel(status)}</span>
+              <span style={{ opacity:.6 }}>·</span><span>{drama.year}</span>
+              {drama.episodes && <><span style={{ opacity:.6 }}>·</span><span>{drama.episodes} EP</span></>}
+              {runtime && <><span style={{ opacity:.6 }}>·</span><span>{runtime} min/ep</span></>}
+              <span style={{ opacity:.6 }}>·</span>
+              <span className="chip rounded-full px-2 py-0.5 text-xs" style={{ color: "#fff", background: "rgba(255,255,255,0.12)" }}>{statusLabel(status)}</span>
               {drama.genres.map((g)=>(
-                <span key={g} className="pill rounded-full px-2 py-0.5 text-xs">{g}</span>
+                <span key={g} className="chip rounded-full px-2 py-0.5 text-xs" style={{ color: "#fff", background: "rgba(255,255,255,0.12)" }}>{g}</span>
               ))}
             </div>
-            <p className="mt-5 max-w-2xl text-base md:text-lg text-white/85 leading-relaxed">
+            <p className="mt-5 max-w-2xl text-base md:text-lg leading-relaxed" style={{ color: "rgba(255,255,255,0.9)", textShadow: "0 2px 10px rgba(0,0,0,0.55)" }}>
               {drama.blurb || "A quiet, unforgettable drama that earns its place in the KDramaWorld canon."}
             </p>
 
@@ -168,9 +168,9 @@ export default function DramaPage() {
                 {k:"Runtime",  v: runtime ? `${runtime} min` : "—"},
                 {k:"Status",   v: statusLabel(status)},
               ].map(s=>(
-                <div key={s.k} className="glass rounded-xl p-3">
+                <div key={s.k} className="glass rounded-xl p-3" style={{ background: "rgba(255,255,255,0.08)" }}>
                   <div className="text-[10px] uppercase tracking-widest" style={{color:"rgba(255,255,255,.6)"}}>{s.k}</div>
-                  <div className="mt-1 text-white font-semibold text-sm">{s.v}</div>
+                  <div className="mt-1 font-semibold text-sm" style={{ color: "#fff" }}>{s.v}</div>
                 </div>
               ))}
             </div>
@@ -195,7 +195,7 @@ function NotFound({ slug }: { slug?: string }) {
     <section className="relative z-10 px-4 md:px-8 lg:px-12 py-16 max-w-2xl mx-auto text-center">
       <div className="text-7xl md:text-8xl font-serif italic gradient-text mb-4">404</div>
       <h1 className="section-title text-3xl md:text-4xl mb-3">Drama not found</h1>
-      <p className="text-white/70 mb-8">
+      <p className="mb-8" style={{ color: "var(--text-muted)" }}>
         We couldn't find a drama matching <code className="px-1.5 py-0.5 rounded glass text-sm">{slug ?? ""}</code>.
         It may have been renamed or removed.
       </p>

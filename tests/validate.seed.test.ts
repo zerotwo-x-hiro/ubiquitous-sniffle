@@ -77,7 +77,7 @@ describe("shelf references resolve", () => {
 
   it("shelves export has the expected ids", () => {
     expect(DATA.shelves.map(s => s.id).sort()).toEqual(
-      ["discover","recent","romance","thriller","fantasy"].sort()
+      ["trending","recent","romance","thriller","fantasy"].sort()
     );
   });
 

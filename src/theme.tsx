@@ -1,46 +1,53 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import type { ReactNode } from "react";
 
-type Theme = "dark" | "light";
-type Ctx = { theme: Theme; toggle: () => void; set: (t: Theme) => void };
+type Theme = "light" | "dark";
 
-const ThemeCtx = createContext<Ctx | null>(null);
+type ThemeContextType = {
+  theme: Theme;
+  setTheme: (t: Theme) => void;
+  toggleTheme: () => void;
+};
 
-const STORAGE_KEY = "kdw:theme";
+const ThemeContext = createContext<ThemeContextType | null>(null);
 
-function getInitial(): Theme {
+const STORAGE_KEY = "kdramaworld-theme";
+
+function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "dark";
-  const saved = window.localStorage.getItem(STORAGE_KEY) as Theme | null;
-  if (saved === "dark" || saved === "light") return saved;
-  const prefersLight = window.matchMedia?.("(prefers-color-scheme: light)").matches;
-  return prefersLight ? "light" : "dark";
+  const stored = window.localStorage.getItem(STORAGE_KEY) as Theme | null;
+  if (stored === "light" || stored === "dark") return stored;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(getInitial);
+  const [theme, setThemeState] = useState<Theme>(() => getInitialTheme());
+
+  const apply = useCallback((t: Theme) => {
+    const root = document.documentElement;
+    root.classList.remove("light", "dark");
+    root.classList.add(t);
+    const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (meta) meta.content = t === "dark" ? "#0a0a0c" : "#fdfaf2";
+  }, []);
 
   useEffect(() => {
-    const root = document.documentElement;
-    root.classList.toggle("light", theme === "light");
-    root.classList.toggle("dark", theme === "dark");
-    window.localStorage.setItem(STORAGE_KEY, theme);
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", theme === "dark" ? "#0b0614" : "#f7f6fb");
-  }, [theme]);
+    apply(theme);
+    try { localStorage.setItem(STORAGE_KEY, theme); } catch {}
+  }, [theme, apply]);
 
-  const value = useMemo<Ctx>(
-    () => ({
-      theme,
-      toggle: () => setTheme((t) => (t === "dark" ? "light" : "dark")),
-      set: setTheme,
-    }),
-    [theme]
+  const setTheme = useCallback((t: Theme) => setThemeState(t), []);
+  const toggleTheme = useCallback(() => setThemeState((t) => (t === "dark" ? "light" : "dark")), []);
+
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
   );
-
-  return <ThemeCtx.Provider value={value}>{children}</ThemeCtx.Provider>;
 }
 
 export function useTheme() {
-  const c = useContext(ThemeCtx);
-  if (!c) throw new Error("useTheme outside provider");
+  const c = useContext(ThemeContext);
+  if (!c) throw new Error("useTheme outside ThemeProvider");
   return c;
 }
