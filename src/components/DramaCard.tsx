@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import type { AnyDrama } from "@/LiveData";
+import { useAuth } from "@/Auth";
 
 type Props = {
   drama: AnyDrama;
@@ -16,6 +17,13 @@ export default function DramaCard({ drama }: Props) {
   const d: any = drama;
   const poster = d.poster || d.posterOriginal || null;
   const yearTag = d.isNew ? "New" : d.year ? String(d.year) : null;
+  const { watchlist, addToWatchlist, removeFromWatchlist, openAuthModal, user } = useAuth();
+  const saved = watchlist.has(d.slug);
+  const toggleSave = async (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!user) return openAuthModal();
+    if (saved) await removeFromWatchlist(d.slug); else await addToWatchlist(d.slug);
+  };
   return (
     <Link
       to={`/drama/${drama.slug}`}
@@ -53,6 +61,22 @@ export default function DramaCard({ drama }: Props) {
             {yearTag}
           </div>
         )}
+        <button
+          onClick={toggleSave}
+          aria-label={saved ? "Remove from My List" : "Add to My List"}
+          className="absolute bottom-2 right-2 w-8 h-8 rounded-full grid place-items-center transition opacity-0 group-hover:opacity-100"
+          style={{
+            background: saved ? "var(--accent)" : "rgba(0,0,0,0.65)",
+            color: "#fff",
+            border: "1px solid rgba(255,255,255,0.3)",
+          }}
+        >
+          {saved ? (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          )}
+        </button>
       </div>
       <div className="mt-2">
         <div className="text-[13.5px] md:text-[14px] font-semibold leading-tight line-clamp-2"
