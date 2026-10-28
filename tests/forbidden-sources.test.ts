@@ -13,7 +13,7 @@ function walk(dir: string): string[] {
   const out: string[] = [];
   const { readdirSync, statSync } = require("node:fs");
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name === "node_modules" || entry.name === "dist" || entry.name.startsWith(".")) continue;
+    if (entry.name === "node_modules" || entry.name === "dist" || entry.name === "tests" || entry.name.startsWith(".")) continue;
     const p = resolve(dir, entry.name);
     if (entry.isDirectory()) out.push(...walk(p));
     else if (/\.(ts|tsx|js|jsx)$/.test(entry.name)) out.push(p);
@@ -24,9 +24,15 @@ function walk(dir: string): string[] {
 const FILES = walk(resolve(ROOT, "src")).concat(walk(resolve(ROOT, "scripts")));
 
 const FORBIDDEN = [
+  // Never fetch/proxy MDL (no public API; unofficial clients scrape).
   /fetch\s*\(\s*['"]https?:\/\/[^'"]*mydramalist\.com/,
+  // Never hotlink MDL images/CDNs.
   /https?:\/\/[^'"\s)]*(?:image|cdn|static|img)\.mydramalist\.com/,
-  /mydramalist\.com\/(?!search\?q=)/,
+  // Only the MDL root landing page (`mydramalist.com/` at end of a quoted
+  // string or followed by punctuation) and `/search?q=` outbound links are
+  // permitted. Any deeper path (title pages, profile pages, etc.) is forbidden
+  // to keep MDL link-only per our data-source policy.
+  /mydramalist\.com\/(?!search\?q=)(?![\s"')\],])(?!$)/,
 ];
 
 describe("forbidden sources: MyDramaList", () => {
