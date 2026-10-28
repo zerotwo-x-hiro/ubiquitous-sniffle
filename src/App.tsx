@@ -14,6 +14,7 @@ import Footer from "@/components/Footer";
 import DramaPage from "@/pages/DramaPage";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { LiveDataProvider, useLiveData } from "@/LiveData";
+import { useSeo } from "@/lib/seo";
 
 // Real pages (replacing placeholders)
 import ExplorePage from "@/pages/ExplorePage";
@@ -29,6 +30,10 @@ import StaticPage from "@/pages/StaticPage";
 
 function Home() {
   const { shelves } = useLiveData();
+  useSeo({
+    title: undefined,
+    description: "Hand-picked Korean drama shelves, live ratings and real posters — discover your next obsession without noise or spoilers.",
+  });
   return (
     <ErrorBoundary fallbackLabel="Home page">
       <Hero />
