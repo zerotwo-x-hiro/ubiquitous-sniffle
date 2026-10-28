@@ -18,7 +18,7 @@ export default function Hero() {
 
   return (
     <section className="relative z-10 px-4 md:px-8 lg:px-12 pt-8 md:pt-14 pb-4">
-      <div className="relative glass-strong rounded-3xl overflow-hidden">
+      <div className="relative glass-strong rounded-3xl overflow-hidden hanji">
         {/* Backdrop */}
         <div className={`absolute inset-0 ${featured.art}`} aria-hidden />
         {backdrop && (
@@ -27,16 +27,23 @@ export default function Hero() {
         )}
         <div className="absolute inset-0"
              style={{ background: "linear-gradient(120deg, rgba(11,6,20,.88) 10%, rgba(11,6,20,.55) 50%, rgba(11,6,20,.25) 100%)" }} />
+        {/* Hanja watermark in the corner */}
+        <span className="hanja-mark" style={{ top: "-2.5rem", right: "-1rem", transform: "rotate(6deg)" }} aria-hidden>韓</span>
         <div className="absolute -top-16 -right-10 w-[480px] h-[480px] rounded-full aurora"
              style={{ background: "radial-gradient(circle, rgba(255,94,168,.5), transparent 60%)" }} aria-hidden />
         <div className="absolute -bottom-20 -left-20 w-[520px] h-[520px] rounded-full aurora"
              style={{ background: "radial-gradient(circle, rgba(74,168,255,.45), transparent 60%)", animationDelay: "-6s" }} aria-hidden />
+        {/* Vertical Korean accent on the right */}
+        <div className="hidden lg:flex absolute right-6 top-10 items-center gap-4">
+          <div className="h-32 w-px" style={{background:"linear-gradient(180deg,transparent,var(--border-strong),transparent)"}} />
+          <span className="vertical-ko floaty">오늘의 드라마</span>
+        </div>
 
         <div className="relative rise grid md:grid-cols-[1.2fr_0.8fr] gap-8 md:gap-12 p-6 md:p-10 lg:p-14 items-center">
           <div>
-            <span className="kicker">
-              <span className="dot" />
-              {featured.tagline ?? "Top Pick · Featured K-Drama"}
+            <span className="kicker-ko">
+              <span className="han">推</span>
+              <span>{featured.tagline ?? "Top Pick · Featured K-Drama"}</span>
             </span>
             <h1 className="section-title mt-5 text-4xl md:text-6xl lg:text-7xl leading-[0.95]" style={{ color:"#fff" }}>
               {featured.title.split(" ").map((w,i)=>(
@@ -75,7 +82,14 @@ export default function Hero() {
             <p className="mt-5 max-w-xl text-base md:text-lg text-white/85 leading-relaxed">
               {featured.blurb}
             </p>
-            <div className="mt-7 flex flex-wrap items-center gap-3">
+            <p className="mt-3 font-hangul text-base md:text-lg text-white/65 leading-relaxed">
+              오늘 밤, 당신의 다음 드라마를 만나보세요.
+            </p>
+            <div className="taegeuk-divider mt-6 max-w-xs">
+              <span className="taegeuk" aria-hidden />
+              <span>EST · {new Date().getFullYear()}</span>
+            </div>
+            <div className="mt-5 flex flex-wrap items-center gap-3">
               <Link to={`/drama/${featured.slug}`} className="btn-primary h-11 px-6 rounded-xl inline-flex items-center gap-2 font-semibold">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                 Explore

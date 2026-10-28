@@ -99,7 +99,7 @@ export default function DramaPage() {
                 )}
               </span>
               <span className="opacity-80">·</span><span>{drama.year}</span>
-              {drama.episodes && <><span className="opacity-80">·</span><span>{drama.episodes} Episodes</span></>}
+              {drama.episodes && <><span className="opacity-80">·</span><span>{drama.episodes} <span className="font-hangul text-xs tracking-normal opacity-90">부작</span></span></>}
               {runtime && <><span className="opacity-80">·</span><span>{runtime} min/ep</span></>}
               <span className="opacity-80">·</span>
               <span className="pill rounded-full px-2 py-0.5 text-xs">{statusLabel(status)}</span>

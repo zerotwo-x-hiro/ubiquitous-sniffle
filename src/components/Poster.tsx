@@ -70,8 +70,9 @@ export default function Poster({ drama, className = "", showTitle = true, size =
       )}
       {showTitle && (
         <div className="title-plate z-10">
-          <div className="text-[10px] uppercase tracking-[0.18em] text-white/80 mb-1">
-            {drama.year}{drama.episodes ? ` · ${drama.episodes} eps` : ""}
+          <div className="text-[10px] uppercase tracking-[0.18em] text-white/80 mb-1 flex items-center gap-2">
+            <span>{drama.year}</span>
+            {drama.episodes && <><span>·</span><span className="font-hangul text-[10px] tracking-normal" style={{fontSize:10}}>{drama.episodes}부작</span></>}
           </div>
           <div className="text-lg leading-tight drop-shadow-lg">{drama.title}</div>
         </div>
