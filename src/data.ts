@@ -151,16 +151,20 @@ export const topRated: Drama[] = CATALOG
 
 export const comingSoon: Drama[] = []; // no fabricated future slates
 
-export type Actor = { slug: string; name: string; art: string };
+export type Actor = { slug: string; name: string; art: string; tmdbId?: number; tmdbProfile?: string };
+// Actor headshots are loaded directly from TMDB's CDN (image.tmdb.org/t/p/w185)
+// in the browser — no server round-trip, no keys exposed. tmdbProfile is the
+// /... file path returned by TMDB /person/:id. On image error the UI falls
+// back to a decorative gradient circle with initials.
 export const actors: Actor[] = [
-  { slug: "lee-ji-eun",    name: "Lee Ji-eun (IU)",   art: "art-b" },
-  { slug: "lee-dong-wook", name: "Lee Dong-wook",     art: "art-b" },
-  { slug: "gong-hyo-jin",  name: "Gong Hyo-jin",      art: "art-a" },
-  { slug: "kim-go-eun",    name: "Kim Go-eun",        art: "art-f" },
-  { slug: "hyun-bin",      name: "Hyun Bin",          art: "art-g" },
-  { slug: "son-ye-jin",    name: "Son Ye-jin",        art: "art-c" },
-  { slug: "park-seo-joon", name: "Park Seo-joon",     art: "art-d" },
-  { slug: "kim-soo-hyun",  name: "Kim Soo-hyun",      art: "art-e" },
+  { slug: "lee-ji-eun",    name: "Lee Ji-eun (IU)",   art: "art-b", tmdbId: 1252318, tmdbProfile: "/uNhKOO9lIAFXF11LM6gjCrX2CJz.jpg" },
+  { slug: "lee-dong-wook", name: "Lee Dong-wook",     art: "art-b", tmdbId: 1238592, tmdbProfile: "/bsLXIwLRNYkGim6RrLuo45OWB06.jpg" },
+  { slug: "gong-hyo-jin",  name: "Gong Hyo-jin",      art: "art-a", tmdbId: 126881,  tmdbProfile: "/u2ZDHJOHRkgzY0dpaORitoZjF4F.jpg" },
+  { slug: "kim-go-eun",    name: "Kim Go-eun",        art: "art-f", tmdbId: 1067849, tmdbProfile: "/p7wuD6eX0YcZ5LXWhx0XjvEYZKz.jpg" },
+  { slug: "hyun-bin",      name: "Hyun Bin",          art: "art-g", tmdbId: 544107,  tmdbProfile: "/JQFzhO9j8HRiyr7leGPj6cqhvM.jpg" },
+  { slug: "son-ye-jin",    name: "Son Ye-jin",        art: "art-c", tmdbId: 86889,   tmdbProfile: "/i6fASFvO3mUceZJvipn4RiLHA44.jpg" },
+  { slug: "park-seo-joon", name: "Park Seo-joon",     art: "art-d", tmdbId: 1347525, tmdbProfile: "/k1ALgZkOApYt7PIUBkUitmknXQC.jpg" },
+  { slug: "kim-soo-hyun",  name: "Kim Soo-hyun",      art: "art-e", tmdbId: 1251581, tmdbProfile: "/q24P4pmtWGhe08T7rTkoDc5EC1p.jpg" },
 ];
 
 export type Genre = { slug: string; name: string; art: string; accent: string };
