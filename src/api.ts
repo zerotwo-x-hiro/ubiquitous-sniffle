@@ -95,30 +95,70 @@ function isKoreanDrama(show: TvMazeShow, seed?: Drama): boolean {
   const cc = show.network?.country?.code ?? show.webChannel?.country?.code;
   const chan = (show.network?.name || show.webChannel?.name || "").toLowerCase();
   const lang = (show.language || "").toLowerCase();
+  const genres = (show.genres || []).map((g) => g.toLowerCase());
 
   // Hard blocklist of non-Korean channels/studios (takes precedence).
   if (/(^|\W)(at-x|tokyo mx|nhk|fuji tv|tbs|mbs|abema|wowow|bbc|itv|comedy central|amc|disney\+|hbo|showtime|oxygen|tnt|zdf|hot3|tv3|show tv|ozone|netflix us|hulu|apple tv\+|smithsonian|history channel|national geographic|cnn|comedy\.tv)($|\W)/.test(chan)) return false;
   // K-pop / variety channels.
   if (/(vlive|weverse|v live|kakao tv)/.test(chan)) return false;
 
+  // Reject non-drama genres: reality/variety/talk/music/game-show/family-kids
+  // (prevents matching variety shows like jTBC's "Night Goblin" against
+  // searches for the drama "Goblin").
+  if (genres.some((g) => /reality|variety|talk.show|game.show|music|children|family|news|documentary/i.test(g))) return false;
+
+  // Must claim "Drama" as one of its genres (or have no genres populated, which
+  // we accept in case of incomplete records — KR country/language will gate it).
+  if (genres.length > 0 && !genres.some((g) => /drama/i.test(g))) {
+    // Allow fantasy/romance/crime/thriller/mystery/action/horror/comedy/medical/legal/historical/sports/supernatural — these
+    // frequently appear alongside drama in K-show genre tagging.
+    const dramaAdjacent = /fantasy|romance|crime|thriller|mystery|action|horror|comedy|medical|legal|historical|sports|supernatural|adventure/;
+    if (!genres.some((g) => dramaAdjacent.test(g))) return false;
+  }
+
   // If country code is declared and it's NOT KR -> reject outright.
   if (cc && cc !== "KR") return false;
 
   // Title sanity: if seed title is provided, require the returned TVMaze show
-  // name to have some lexical overlap (stops /singlesearch returning unrelated
-  // shows like "Crash Landing on You" -> AMC "Bunny", "Secret Garden" ->
-  // Smithsonian "Mystery Files").
+  // name to have strong lexical overlap. /search/shows returns many results,
+  // and a single shared word like "goblin" can match the wrong show (e.g.
+  // jTBC variety "Night Goblin" vs tvN drama "Goblin").
   if (seed && show.name) {
     const aNorm = normTitle(seed.title);
     const bNorm = normTitle(show.name);
     const aToks = titleTokens(seed.title);
     const bToks = titleTokens(show.name);
     const bSet = new Set(bToks);
-    const sharedTok = aToks.some((t) => bSet.has(t));
+    const sharedTok = aToks.filter((t) => bSet.has(t) && t.length >= 3);
     const contains = aNorm.length >= 3 && bNorm.length >= 3 && (aNorm.includes(bNorm) || bNorm.includes(aNorm));
-    // Must share at least one word OR one contain the other. Otherwise the
-    // API returned a semantically unrelated show: fall back to curated seed.
-    if (!sharedTok && !contains && aNorm.length >= 5 && bNorm.length >= 5) return false;
+    // Single-word seed titles (like "Goblin", "Signal", "Mouse", "Kingdom", "Healer", "Tunnel")
+    // are the collision-prone ones: require the result's title to be short enough
+    // that it's clearly the same show, OR share the word AND not have extra
+    // distinguishing content words we don't expect. If the result's title is
+    // much longer than the seed and doesn't contain the seed in it, reject.
+    if (aToks.length <= 1) {
+      // Single-word seed: require the TVMaze title to be essentially "Goblin" (or
+      // "[adjective] Goblin" with the leading token being an article/episode word).
+      // We accept if (a) the exact seed title is a substring of the result title
+      // AND the result title isn't padded with extra content words that would
+      // indicate a different show (e.g. "Night Goblin", "Goblin Slayer").
+      const seedW = aNorm;
+      const resultHasExtra = bToks.some((t) => t !== seedW && t.length >= 4 && !/^the$|^a$|^of$|^and$|^in$|^ii$|^iii$/.test(t));
+      if (resultHasExtra && !(bNorm.startsWith(seedW) && bToks.length <= 2)) {
+        // Even tighter: for single-word seeds, exact normalized title match
+        // OR substring match where the seed appears at the start AND the total
+        // length ratio is close. Night Goblin = "nightgoblin" (11) vs "goblin" (6):
+        // ratio 1.83 > 1.4 → reject.
+        const ratio = bNorm.length / Math.max(aNorm.length, 1);
+        if (ratio > 1.4) return false;
+      }
+      // Also require shared token.
+      if (!sharedTok.length && !contains) return false;
+    } else {
+      // Multi-word seed: share at least one substantive (>=4 char) token OR contain.
+      const bigShared = sharedTok.some((t) => t.length >= 4);
+      if (!bigShared && !contains && aNorm.length >= 5 && bNorm.length >= 5) return false;
+    }
   }
 
   // Accept: official country == KR OR language == Korean.
