@@ -71,6 +71,11 @@ await check("health 200 + ok:true + tvmaze ok", "/api/health", {
 await check("sitemap serves XML", "/api/sitemap.xml", { expectStatus: 200, contains: ["<?xml", "<urlset", "/drama/my-mister"] });
 await check("robots.txt", "/robots.txt", { expectStatus: 200, contains: ["User-agent", "Sitemap:", "Disallow: /api/"] });
 
+await check("enrich endpoint (goblin) returns JSON", "/api/enrich/shows/16150", {
+  isJson: true,
+  jsonOk: j => j.tvmazeId === 16150 && (j.imdbId === "tt5994344" || typeof j.imdbId === "string") && Array.isArray(j.warnings),
+});
+
 // --- Pages: titles ---
 await check("home title", "/", { titleIncludes: "KDramaWorld", ogTitle: "KDramaWorld", hasOgImage: "default", contains: ["오늘의 드라마", "韓"] });
 await check("explore", "/explore", { titleIncludes: "Explore" });

@@ -31,13 +31,34 @@ export type TvMazeShow = {
 export type EnrichedDrama = Drama & {
   tvmazeId?: number;
   poster?: string;       // medium image (350×495-ish)
-  backdrop?: string;     // original image
+  backdrop?: string;     // original image (TMDB when available, else TVMaze original)
+  tmdbPoster?: string;   // TMDB alternative poster (higher res than TVMaze)
+  tagline?: string;      // TMDB tagline
   imdbId?: string;
+  imdbRating?: number;   // IMDb audience rating (only when ≥ 5,000 votes)
+  imdbVotes?: number;    // IMDb vote count
   status?: string;
   runtime?: number;
   summaryText?: string;  // HTML stripped for blurb
   fetchError?: string;
   _needsImageRefetch?: number; // internal: tvmaze id to fetch image for if initial hit lacked it
+};
+
+/** Result shape of /api/enrich/shows/:tvmazeId — server-side TMDB+OMDb merge. */
+export type ServerEnrich = {
+  tvmazeId: number;
+  imdbId: string | null;
+  tmdbId: number | null;
+  backdrop: string | null;
+  poster: string | null;
+  tmdbPoster: string | null;
+  tagline: string | null;
+  overview: string | null;
+  imdbRating: number | null;
+  imdbVotes: number | null;
+  sources: { tmdb: { keySource: string; id: number } | null; omdb: { keySource: string } | null };
+  warnings: string[];
+  ms: number;
 };
 
 const BASE = "/api/tvmaze";
@@ -505,4 +526,26 @@ export function getRecentCached(limit = 12): Promise<EnrichedDrama[]> {
   const key = `recent-${limit}`;
   if (!listCache.has(key)) listCache.set(key, fetchRecentKdramas(limit));
   return listCache.get(key)!;
+}
+
+/** Fetch supplementary TMDB/OMDb data (backdrop, TMDB poster, IMDb rating)
+ *  for a drama that already has a tvmazeId. Returns null if the endpoint
+ *  fails or the drama has no tvmazeId. Called client-side, opt-in; missing
+ *  data degrades gracefully (TVMaze backdrop + no IMDb pill). */
+const enrichCache = new Map<number, Promise<ServerEnrich | null>>();
+export function fetchSupplemental(tvmazeId: number | undefined): Promise<ServerEnrich | null> {
+  if (!tvmazeId) return Promise.resolve(null);
+  if (enrichCache.has(tvmazeId)) return enrichCache.get(tvmazeId)!;
+  const p = (async () => {
+    try {
+      const r = await fetch(`/api/enrich/shows/${tvmazeId}`, { headers: { Accept: "application/json" } });
+      if (!r.ok) return null;
+      const j = (await r.json()) as ServerEnrich;
+      return j && j.tvmazeId === tvmazeId ? j : null;
+    } catch {
+      return null;
+    }
+  })();
+  enrichCache.set(tvmazeId, p);
+  return p;
 }
