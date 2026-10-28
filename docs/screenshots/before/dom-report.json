@@ -1,0 +1,167 @@
+{
+  "phase": "before",
+  "baseUrl": "http://localhost:5173",
+  "generatedAt": "2026-10-28T12:40:40.352Z",
+  "routes": [
+    {
+      "route": "/",
+      "status": 200,
+      "title": "KDramaWorld — Your World of Korean Dramas",
+      "bytes": 1155,
+      "h1": 0,
+      "root": true,
+      "blank": true,
+      "bundles": []
+    },
+    {
+      "route": "/explore",
+      "status": 200,
+      "title": "KDramaWorld — Your World of Korean Dramas",
+      "bytes": 1155,
+      "h1": 0,
+      "root": true,
+      "blank": true,
+      "bundles": []
+    },
+    {
+      "route": "/genres",
+      "status": 200,
+      "title": "KDramaWorld — Your World of Korean Dramas",
+      "bytes": 1155,
+      "h1": 0,
+      "root": true,
+      "blank": true,
+      "bundles": []
+    },
+    {
+      "route": "/genres/romance",
+      "status": 200,
+      "title": "KDramaWorld — Your World of Korean Dramas",
+      "bytes": 1155,
+      "h1": 0,
+      "root": true,
+      "blank": true,
+      "bundles": []
+    },
+    {
+      "route": "/genres/thriller",
+      "status": 200,
+      "title": "KDramaWorld — Your World of Korean Dramas",
+      "bytes": 1155,
+      "h1": 0,
+      "root": true,
+      "blank": true,
+      "bundles": []
+    },
+    {
+      "route": "/actors",
+      "status": 200,
+      "title": "KDramaWorld — Your World of Korean Dramas",
+      "bytes": 1155,
+      "h1": 0,
+      "root": true,
+      "blank": true,
+      "bundles": []
+    },
+    {
+      "route": "/drama/my-mister",
+      "status": 200,
+      "title": "KDramaWorld — Your World of Korean Dramas",
+      "bytes": 1155,
+      "h1": 0,
+      "root": true,
+      "blank": true,
+      "bundles": []
+    },
+    {
+      "route": "/drama/goblin",
+      "status": 200,
+      "title": "KDramaWorld — Your World of Korean Dramas",
+      "bytes": 1155,
+      "h1": 0,
+      "root": true,
+      "blank": true,
+      "bundles": []
+    },
+    {
+      "route": "/drama/crash-landing-on-you",
+      "status": 200,
+      "title": "KDramaWorld — Your World of Korean Dramas",
+      "bytes": 1155,
+      "h1": 0,
+      "root": true,
+      "blank": true,
+      "bundles": []
+    },
+    {
+      "route": "/midnight-watchlist",
+      "status": 200,
+      "title": "KDramaWorld — Your World of Korean Dramas",
+      "bytes": 1155,
+      "h1": 0,
+      "root": true,
+      "blank": true,
+      "bundles": []
+    },
+    {
+      "route": "/second-lead-syndrome",
+      "status": 200,
+      "title": "KDramaWorld — Your World of Korean Dramas",
+      "bytes": 1155,
+      "h1": 0,
+      "root": true,
+      "blank": true,
+      "bundles": []
+    },
+    {
+      "route": "/emotional-damage",
+      "status": 200,
+      "title": "KDramaWorld — Your World of Korean Dramas",
+      "bytes": 1155,
+      "h1": 0,
+      "root": true,
+      "blank": true,
+      "bundles": []
+    },
+    {
+      "route": "/lists",
+      "status": 200,
+      "title": "KDramaWorld — Your World of Korean Dramas",
+      "bytes": 1155,
+      "h1": 0,
+      "root": true,
+      "blank": true,
+      "bundles": []
+    },
+    {
+      "route": "/about",
+      "status": 200,
+      "title": "KDramaWorld — Your World of Korean Dramas",
+      "bytes": 1155,
+      "h1": 0,
+      "root": true,
+      "blank": true,
+      "bundles": []
+    },
+    {
+      "route": "/sources",
+      "status": 200,
+      "title": "KDramaWorld — Your World of Korean Dramas",
+      "bytes": 1155,
+      "h1": 0,
+      "root": true,
+      "blank": true,
+      "bundles": []
+    },
+    {
+      "route": "/does-not-exist",
+      "status": 200,
+      "title": "KDramaWorld — Your World of Korean Dramas",
+      "bytes": 1155,
+      "h1": 0,
+      "root": true,
+      "blank": true,
+      "bundles": []
+    }
+  ]
+}
