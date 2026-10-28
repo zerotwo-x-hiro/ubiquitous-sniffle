@@ -36,6 +36,7 @@ export type EnrichedDrama = Drama & {
   runtime?: number;
   summaryText?: string;  // HTML stripped for blurb
   fetchError?: string;
+  _needsImageRefetch?: number; // internal: tvmaze id to fetch image for if initial hit lacked it
 };
 
 const BASE = "https://api.tvmaze.com";
@@ -94,30 +95,70 @@ function isKoreanDrama(show: TvMazeShow, seed?: Drama): boolean {
   const cc = show.network?.country?.code ?? show.webChannel?.country?.code;
   const chan = (show.network?.name || show.webChannel?.name || "").toLowerCase();
   const lang = (show.language || "").toLowerCase();
+  const genres = (show.genres || []).map((g) => g.toLowerCase());
 
   // Hard blocklist of non-Korean channels/studios (takes precedence).
   if (/(^|\W)(at-x|tokyo mx|nhk|fuji tv|tbs|mbs|abema|wowow|bbc|itv|comedy central|amc|disney\+|hbo|showtime|oxygen|tnt|zdf|hot3|tv3|show tv|ozone|netflix us|hulu|apple tv\+|smithsonian|history channel|national geographic|cnn|comedy\.tv)($|\W)/.test(chan)) return false;
   // K-pop / variety channels.
   if (/(vlive|weverse|v live|kakao tv)/.test(chan)) return false;
 
+  // Reject non-drama genres: reality/variety/talk/music/game-show/family-kids
+  // (prevents matching variety shows like jTBC's "Night Goblin" against
+  // searches for the drama "Goblin").
+  if (genres.some((g) => /reality|variety|talk.show|game.show|music|children|family|news|documentary/i.test(g))) return false;
+
+  // Must claim "Drama" as one of its genres (or have no genres populated, which
+  // we accept in case of incomplete records — KR country/language will gate it).
+  if (genres.length > 0 && !genres.some((g) => /drama/i.test(g))) {
+    // Allow fantasy/romance/crime/thriller/mystery/action/horror/comedy/medical/legal/historical/sports/supernatural — these
+    // frequently appear alongside drama in K-show genre tagging.
+    const dramaAdjacent = /fantasy|romance|crime|thriller|mystery|action|horror|comedy|medical|legal|historical|sports|supernatural|adventure/;
+    if (!genres.some((g) => dramaAdjacent.test(g))) return false;
+  }
+
   // If country code is declared and it's NOT KR -> reject outright.
   if (cc && cc !== "KR") return false;
 
   // Title sanity: if seed title is provided, require the returned TVMaze show
-  // name to have some lexical overlap (stops /singlesearch returning unrelated
-  // shows like "Crash Landing on You" -> AMC "Bunny", "Secret Garden" ->
-  // Smithsonian "Mystery Files").
+  // name to have strong lexical overlap. /search/shows returns many results,
+  // and a single shared word like "goblin" can match the wrong show (e.g.
+  // jTBC variety "Night Goblin" vs tvN drama "Goblin").
   if (seed && show.name) {
     const aNorm = normTitle(seed.title);
     const bNorm = normTitle(show.name);
     const aToks = titleTokens(seed.title);
     const bToks = titleTokens(show.name);
     const bSet = new Set(bToks);
-    const sharedTok = aToks.some((t) => bSet.has(t));
+    const sharedTok = aToks.filter((t) => bSet.has(t) && t.length >= 3);
     const contains = aNorm.length >= 3 && bNorm.length >= 3 && (aNorm.includes(bNorm) || bNorm.includes(aNorm));
-    // Must share at least one word OR one contain the other. Otherwise the
-    // API returned a semantically unrelated show: fall back to curated seed.
-    if (!sharedTok && !contains && aNorm.length >= 5 && bNorm.length >= 5) return false;
+    // Single-word seed titles (like "Goblin", "Signal", "Mouse", "Kingdom", "Healer", "Tunnel")
+    // are the collision-prone ones: require the result's title to be short enough
+    // that it's clearly the same show, OR share the word AND not have extra
+    // distinguishing content words we don't expect. If the result's title is
+    // much longer than the seed and doesn't contain the seed in it, reject.
+    if (aToks.length <= 1) {
+      // Single-word seed: require the TVMaze title to be essentially "Goblin" (or
+      // "[adjective] Goblin" with the leading token being an article/episode word).
+      // We accept if (a) the exact seed title is a substring of the result title
+      // AND the result title isn't padded with extra content words that would
+      // indicate a different show (e.g. "Night Goblin", "Goblin Slayer").
+      const seedW = aNorm;
+      const resultHasExtra = bToks.some((t) => t !== seedW && t.length >= 4 && !/^the$|^a$|^of$|^and$|^in$|^ii$|^iii$/.test(t));
+      if (resultHasExtra && !(bNorm.startsWith(seedW) && bToks.length <= 2)) {
+        // Even tighter: for single-word seeds, exact normalized title match
+        // OR substring match where the seed appears at the start AND the total
+        // length ratio is close. Night Goblin = "nightgoblin" (11) vs "goblin" (6):
+        // ratio 1.83 > 1.4 → reject.
+        const ratio = bNorm.length / Math.max(aNorm.length, 1);
+        if (ratio > 1.4) return false;
+      }
+      // Also require shared token.
+      if (!sharedTok.length && !contains) return false;
+    } else {
+      // Multi-word seed: share at least one substantive (>=4 char) token OR contain.
+      const bigShared = sharedTok.some((t) => t.length >= 4);
+      if (!bigShared && !contains && aNorm.length >= 5 && bNorm.length >= 5) return false;
+    }
   }
 
   // Accept: official country == KR OR language == Korean.
@@ -145,57 +186,137 @@ function yearMatches(show: TvMazeShow, seedYear: number): boolean {
 export async function fetchDramaByTitle(seed: Drama, options?: { episodes?: boolean }): Promise<EnrichedDrama> {
   const { episodes = false } = options ?? {};
 
-  // Build primary URL: id lookup when we have an id, otherwise singlesearch.
-  const useId = typeof seed.tvmazeId === "number" && seed.tvmazeId > 0;
-  const url = useId
-    ? `${BASE}/shows/${seed.tvmazeId}${episodes ? "?embed=episodes" : ""}`
-    : (() => {
-        const params = new URLSearchParams({ q: seed.title });
-        if (episodes) params.set("embed", "episodes");
-        return `${BASE}/singlesearch/shows?${params.toString()}`;
-      })();
+  // Try multiple endpoints in order: /shows/:id (if seed has one), /singlesearch
+  // (best-effort top hit), and /search (array of matches). /singlesearch returns
+  // a stripped record (no image) for some popular shows, so we always consider
+  // the /search list and pick the best-validated candidate; we also run a
+  // follow-up /shows/:id hydrate if the winning match lacks a poster.
+  // Specify `specials=1&embed=episodes` isn't needed for images — but we add
+  // no `images` embed; we rely on the show.image field that TVMaze returns on
+  // /shows/:id. For /singlesearch and /search, images ARE included when present.
+  const urls: string[] = [];
+  if (typeof seed.tvmazeId === "number" && seed.tvmazeId > 0) {
+    // Always embed episodes when requested; always add ?embed=episodes OR
+    // plain; we also append nothing here — TVMaze always returns show.image
+    // on the /shows/:id endpoint, but we will also explicitly re-hydrate via
+    // hydratePosterIfMissing if poster is missing.
+    const qs = episodes ? "?embed=episodes" : "";
+    urls.push(`${BASE}/shows/${seed.tvmazeId}${qs}`);
+  }
+  // Always ask /singlesearch with no embed first (faster); then /search for the
+  // list; finally /shows/:id lookup by the ID we discover, as a hydrate step.
+  const singleParams = new URLSearchParams({ q: seed.title });
+  if (episodes) singleParams.set("embed", "episodes");
+  urls.push(`${BASE}/singlesearch/shows?${singleParams.toString()}`);
+  urls.push(`${BASE}/search/shows?q=${encodeURIComponent(seed.title)}`);
 
-  try {
-    const res = await fetch(url, { headers: { Accept: "application/json" } });
-    if (!res.ok) {
-      if (res.status === 404) return { ...seed };
-      throw new Error(`TVMaze ${res.status}`);
+  let best: EnrichedDrama | null = null;
+  let lastErr: Error | null = null;
+
+  function scoreCandidate(e: EnrichedDrama): number {
+    // Heavily prefer results that have a poster. Network, summary, rating are
+    // tie-breakers. Poster MUST be present for the candidate to beat one that
+    // does — a title+rating without a real image is never better than a real
+    // image match (we fall back to gradient posters only when everything fails).
+    return (e.poster ? 10_000 : 0) + (e.network ? 100 : 0) + (e.summaryText ? 10 : 0) + (e.rating > 0 ? 2 : 0) + (e.backdrop ? 1 : 0);
+  }
+
+  function consider(show: TvMazeShow) {
+    if (!show?.id) return;
+    // If this show was reached via an explicit seed.tvmazeId match, trust it
+    // directly (we seeded that ID intentionally to bypass fuzzy matching for
+    // canonical titles like Guardian: The Lonely and Great God / "Goblin").
+    const trusted = typeof seed.tvmazeId === "number" && seed.tvmazeId > 0 && show.id === seed.tvmazeId;
+    if (!trusted) {
+      if (!isKoreanDrama(show, seed)) return;
+      if (!yearMatches(show, seed.year)) return;
     }
-    const show: TvMazeShow = await res.json();
+    const merged = mergeShow(seed, show, episodes);
+    const cur = best as EnrichedDrama | null;
+    if (!cur || scoreCandidate(merged) > scoreCandidate(cur)) best = merged;
+  }
 
-    // ALWAYS validate: reject non-Korean shows, year mismatches, and unrelated
-    // titles regardless of whether we fetched by id or by title. TVMaze ids
-    // can be wrong (e.g. 4711 is the anime "Goblin Slayer"), and /singlesearch
-    // can return semantically unrelated matches ("Crash Landing on You" ->
-    // AMC's "Bunny", "Secret Garden" -> Smithsonian "Mystery Files").
-    if (!isKoreanDrama(show, seed)) return { ...seed };
-    if (!yearMatches(show, seed.year)) return { ...seed };
+  for (const url of urls) {
+    // Once we have a candidate with a poster + network, we can stop early to
+    // save requests (but still finish the in-flight batch).
+    const cur = best as EnrichedDrama | null;
+    if (cur && cur.poster && cur.network) break;
+    try {
+      const res = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!res.ok) {
+        if (res.status !== 404) lastErr = new Error(`TVMaze ${res.status}`);
+        continue;
+      }
+      const payload = await res.json();
+      if (Array.isArray(payload)) {
+        for (const it of payload) consider(it?.show);
+      } else {
+        consider(payload);
+      }
+    } catch (e) {
+      lastErr = e as Error;
+    }
+  }
 
-    const year = yearFrom(show.premiered) ?? seed.year;
-    const runtime = show.averageRuntime ?? show.runtime;
-    const epCount = show._embedded?.episodes?.length;
-    const summary = stripHtml(show.summary);
+  if (!best) return { ...seed, fetchError: lastErr?.message };
 
-    const merged: EnrichedDrama = {
-      ...seed,
-      title: show.name || seed.title,
-      year,
-      rating: pickRating(show),
-      episodes: epCount ?? seed.episodes,
-      genres: show.genres && show.genres.length ? show.genres : seed.genres,
-      blurb: summary ? summary.slice(0, 280) + (summary.length > 280 ? "…" : "") : seed.blurb,
-      network: pickNetwork(show) ?? seed.network,
-      status: show.status ?? undefined,
-      runtime: runtime ?? undefined,
-      tvmazeId: show.id,
-      poster: show.image?.medium ?? undefined,
-      backdrop: show.image?.original ?? undefined,
-      imdbId: show.externals?.imdb ?? undefined,
-      summaryText: summary || undefined,
+  // If best candidate lacks a poster, hydrate via /shows/:id (full record).
+  const hydrated = await hydratePosterIfMissing(best);
+  return hydrated;
+}
+
+function mergeShow(seed: Drama, show: TvMazeShow, episodes: boolean): EnrichedDrama {
+  const year = yearFrom(show.premiered) ?? seed.year;
+  const runtime = show.averageRuntime ?? show.runtime;
+  const epCount = show._embedded?.episodes?.length;
+  const summary = stripHtml(show.summary);
+  const trusted = typeof seed.tvmazeId === "number" && seed.tvmazeId > 0 && show.id === seed.tvmazeId;
+  // For trusted (curated-tvmazeId) seeds, keep the seed title so common English
+  // titles like "Goblin" (canonically "Guardian: The Lonely and Great God")
+  // stay as users expect them in shelves/headers. For fuzzy matches, prefer
+  // TVMaze's title since it's the one we matched against.
+  const title = trusted ? seed.title : (show.name || seed.title);
+  // Keep seed rating if TVMaze returns 0 (some legacy shows show null even
+  // though they have a well-known community rating; seed is our curated value).
+  const tvRating = pickRating(show);
+  const rating = tvRating > 0 ? tvRating : (seed.rating || 0);
+  // Same for genres/blurb/network — prefer TVMaze, fall back to seed.
+  return {
+    ...seed,
+    title,
+    year,
+    rating,
+    episodes: epCount ?? seed.episodes,
+    genres: show.genres && show.genres.length ? show.genres : seed.genres,
+    blurb: summary ? summary.slice(0, 280) + (summary.length > 280 ? "…" : "") : seed.blurb,
+    network: pickNetwork(show) ?? seed.network,
+    status: show.status ?? undefined,
+    runtime: runtime ?? undefined,
+    tvmazeId: show.id,
+    poster: show.image?.medium ?? undefined,
+    backdrop: show.image?.original ?? undefined,
+    imdbId: show.externals?.imdb ?? undefined,
+    summaryText: summary || undefined,
+  };
+}
+
+/** If a merged result is missing its poster (because /singlesearch returned a
+ *  stripped record), fetch the canonical /shows/:id record which always has
+ *  images and patch the poster/backdrop fields. Returns the input unchanged if
+ *  it already has a poster or the refetch fails. */
+async function hydratePosterIfMissing(e: EnrichedDrama): Promise<EnrichedDrama> {
+  if (e.poster || !e.tvmazeId) return e;
+  try {
+    const res = await fetch(`${BASE}/shows/${e.tvmazeId}`, { headers: { Accept: "application/json" } });
+    if (!res.ok) return e;
+    const full: TvMazeShow = await res.json();
+    return {
+      ...e,
+      poster: full.image?.medium ?? e.poster,
+      backdrop: full.image?.original ?? e.backdrop,
     };
-    return merged;
-  } catch (e) {
-    return { ...seed, fetchError: (e as Error).message };
+  } catch {
+    return e;
   }
 }
 

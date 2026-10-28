@@ -19,6 +19,7 @@ export default function Poster({ drama, className = "", showTitle = true, size =
   const status = deriveStatus({
     status: tvStatus,
     premiered: drama.year ? `${drama.year}-01-01` : undefined,
+    ended: tvStatus === "Ended" && drama.year ? `${drama.year}-12-31` : undefined,
   });
   const showRating = canDisplayRating(status, drama.rating) && drama.rating > 0;
 
