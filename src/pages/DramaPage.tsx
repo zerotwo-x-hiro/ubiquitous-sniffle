@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Poster from "@/components/Poster";
 import DramaCard from "@/components/DramaCard";
 import { useLiveData } from "@/LiveData";
+import { useAuth } from "@/Auth";
 import { deriveStatus, statusLabel, canDisplayRating } from "@/lib/status";
 import { useSeo } from "@/lib/seo";
 import { fetchSupplemental } from "@/api";
@@ -14,8 +15,10 @@ type AnyDrama = Drama | EnrichedDrama;
 export default function DramaPage() {
   const { slug } = useParams();
   const { findBySlug, shelves } = useLiveData();
+  const { user, watchlist, addToWatchlist, removeFromWatchlist, openAuthModal } = useAuth();
   const drama = useMemo(() => findBySlug(slug ?? ""), [findBySlug, slug]);
   const [supp, setSupp] = useState<ServerEnrich | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const baseDrama = drama as EnrichedDrama;
   const tvmazeId = baseDrama.tvmazeId;
@@ -140,7 +143,28 @@ export default function DramaPage() {
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3">
-              <Link to="/explore" className="btn-primary h-11 px-6 rounded-xl inline-flex items-center gap-2 font-semibold">
+              {(() => {
+                const saved = watchlist.has(drama.slug);
+                const toggle = async () => {
+                  if (!user) return openAuthModal();
+                  setBusy(true);
+                  if (saved) await removeFromWatchlist(drama.slug); else await addToWatchlist(drama.slug);
+                  setBusy(false);
+                };
+                return (
+                  <button onClick={toggle} disabled={busy}
+                          className={`h-11 px-6 rounded-md inline-flex items-center gap-2 font-bold text-[15px] ${saved ? "btn-ghost" : ""}`}
+                          style={saved ? {} : { background: "#fff", color: "#000" }}>
+                    {saved ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    )}
+                    {saved ? "In My List" : "My List"}
+                  </button>
+                );
+              })()}
+              <Link to="/explore" className="btn-ghost h-11 px-5 rounded-xl inline-flex items-center gap-2 font-semibold">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                 Browse similar
               </Link>
