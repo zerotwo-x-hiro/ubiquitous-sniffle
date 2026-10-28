@@ -535,6 +535,16 @@ export function getRecentCached(limit = 12): Promise<EnrichedDrama[]> {
 const enrichCache = new Map<number, Promise<ServerEnrich | null>>();
 export function fetchSupplemental(tvmazeId: number | undefined): Promise<ServerEnrich | null> {
   if (!tvmazeId) return Promise.resolve(null);
+
+  // Vite's static preview server does not execute Vercel Functions. Avoid a
+  // predictable 404 during local smoke tests; deployed Vercel hosts still use
+  // the server-side enrichment endpoint normally.
+  if (typeof window !== "undefined") {
+    const { hostname, port } = window.location;
+    const isLoopback = hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]" || hostname === "::1";
+    if (isLoopback && port === "4173") return Promise.resolve(null);
+  }
+
   if (enrichCache.has(tvmazeId)) return enrichCache.get(tvmazeId)!;
   const p = (async () => {
     try {
