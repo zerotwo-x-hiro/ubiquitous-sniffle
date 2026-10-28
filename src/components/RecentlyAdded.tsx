@@ -8,14 +8,14 @@ export default function RecentlyAdded() {
       <div className="flex items-end justify-between mb-6">
         <div>
           <div className="text-[11px] uppercase tracking-[0.22em] font-semibold mb-2" style={{color:"var(--text-dim)"}}>
-            Live data · {liveCount} enriched so far
+            Live data · {liveCount} titles enriched
           </div>
           <h2 className="section-title text-2xl md:text-3xl">Fresh in the archive</h2>
           <p className="mt-2 max-w-xl text-sm" style={{color:"var(--text-muted)"}}>
-            Posters, ratings, and metadata fetched live from the TVMaze API every time you load the page.
+            Posters, ratings, episode counts and metadata are fetched live from the TVMaze API on every load.
           </p>
         </div>
-        <a href="/discover?sort=added" className="hidden sm:inline-flex items-center gap-1 text-sm font-semibold" style={{color:"var(--text-muted)"}}>
+        <a href="/explore" className="hidden sm:inline-flex items-center gap-1 text-sm font-semibold" style={{color:"var(--text-muted)"}}>
           Browse all
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
         </a>
@@ -29,7 +29,7 @@ export default function RecentlyAdded() {
             <div className="mt-2 px-0.5">
               <div className="text-[13px] font-semibold leading-tight line-clamp-2 group-hover:text-white" style={{color:"var(--text)"}}>{d.title}</div>
               <div className="text-[11px] uppercase tracking-widest mt-0.5" style={{color:"var(--text-dim)"}}>
-                {d.network && <>{d.network} · </>}{d.year}
+                {d.network ? <>{d.network} · </> : null}{d.year}
               </div>
             </div>
           </a>

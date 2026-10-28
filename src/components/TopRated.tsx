@@ -13,14 +13,14 @@ export default function TopRated() {
             Top Rated <span className="gradient-text italic">K-Dramas</span>
           </h2>
           <p className="mt-3 text-sm md:text-base" style={{ color:"var(--text-muted)" }}>
-            The highest audience scores, pulled live from TVMaze — posters, ratings and metadata refreshed as shows air.
+            Highest audience scores on TVMaze among verified entries. Ratings refresh live; no fabricated numbers.
           </p>
-          <Link to="/discover?sort=rating" className="btn-primary mt-5 h-11 px-5 rounded-xl inline-flex items-center gap-2 font-semibold text-sm">
+          <Link to="/discover" className="btn-primary mt-5 h-11 px-5 rounded-xl inline-flex items-center gap-2 font-semibold text-sm">
             View all
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
           </Link>
           <div className="mt-6 text-[11px] uppercase tracking-widest" style={{ color:"var(--text-dim)" }}>
-            Live audience scores · refreshed from TVMaze API
+            Audience scores from TVMaze · refreshed live
           </div>
         </div>
 
@@ -46,6 +46,7 @@ export default function TopRated() {
                   <div className="mt-2 flex items-center gap-1">
                     <span className="text-amber-400">★</span>
                     <span className="font-bold text-sm gradient-text">{d.rating.toFixed(1)}</span>
+                    <span className="text-[10px] ml-1" style={{color:"var(--text-dim)"}}>TVMaze</span>
                   </div>
                 </div>
               </Link>

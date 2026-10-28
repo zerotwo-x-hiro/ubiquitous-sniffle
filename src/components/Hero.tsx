@@ -1,10 +1,15 @@
 import { Link } from "react-router-dom";
 import Poster from "./Poster";
 import { useLiveData } from "@/LiveData";
+import { deriveStatus, statusLabel } from "@/lib/status";
 
 export default function Hero() {
   const { featured } = useLiveData();
   const backdrop = (featured as any).backdrop as string | undefined;
+  const tvStatus = (featured as any).status;
+  const runtime = (featured as any).runtime as number | undefined;
+  const nextAir = (featured as any).nextAirDate as string | undefined;
+  const status = deriveStatus({ status: tvStatus, premiered: `${featured.year}-01-01`, nextAirDate: nextAir });
 
   return (
     <section className="relative z-10 px-4 md:px-8 lg:px-12 pt-8 md:pt-14 pb-4">
@@ -37,12 +42,19 @@ export default function Hero() {
             </h1>
             <div className="mt-4 flex items-center flex-wrap gap-3 text-sm text-white/80">
               <span className="rating-pill px-2.5 py-1 rounded-full text-white flex items-center gap-1.5 font-semibold">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffc464"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.43 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
-                {featured.rating.toFixed(1)}
+                {featured.rating > 0 ? (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffc464"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.43 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+                    {featured.rating.toFixed(1)} <span className="text-white/60 text-[11px] ml-1 font-normal">on TVMaze</span>
+                  </>
+                ) : (
+                  <span className="text-pink-200/90 uppercase tracking-widest text-[10px]">Not rated yet</span>
+                )}
               </span>
               <span className="opacity-80">·</span>
               <span>{featured.year}</span>
               {featured.episodes && (<><span className="opacity-80">·</span><span>{featured.episodes} Episodes</span></>)}
+              {runtime && (<><span className="opacity-80">·</span><span>{runtime} min/ep</span></>)}
               {featured.network && (<><span className="opacity-80">·</span><span>{featured.network}</span></>)}
               {featured.genres.length > 0 && (
                 <>
@@ -67,12 +79,9 @@ export default function Hero() {
                 More info
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
               </Link>
-              <div className="flex -space-x-2 ml-2">
-                {["art-b","art-c","art-d","art-e"].map(a=>(
-                  <div key={a} className={`w-8 h-8 rounded-full border-2 ${a}`} style={{ borderColor:"rgba(0,0,0,.5)" }} />
-                ))}
+              <div className="text-xs text-white/70 ml-2">
+                <b className="text-white">{statusLabel(status)}</b> · Data from TVMaze
               </div>
-              <div className="text-xs text-white/70"><b className="text-white">Live</b> from TVMaze</div>
             </div>
           </div>
 
@@ -90,17 +99,15 @@ export default function Hero() {
                   <div className="text-white/70 text-xs uppercase tracking-widest mt-1">
                     {featured.network ?? "tvN"} · {featured.year}
                   </div>
-                  <div className="mt-3 h-1 bg-white/20 rounded-full overflow-hidden">
-                    <div className="h-full w-[64%] rounded-full"
-                         style={{ background: "linear-gradient(90deg,#ff5ea8,#9b5cff,#4aa8ff)" }} />
-                  </div>
-                  <div className="mt-1.5 flex justify-between text-[11px] text-white/70">
-                    <span>{(featured as any).status === "Running" ? "Now airing" : "Top Pick"}</span>
-                    <span>★ {featured.rating.toFixed(1)}</span>
+                  <div className="mt-3 flex items-center justify-between text-[11px] text-white/80">
+                    <span>{statusLabel(status)}</span>
+                    <span className="flex items-center gap-1">
+                      <span className="text-amber-300">★</span>
+                      {featured.rating > 0 ? featured.rating.toFixed(1) : "—"}
+                    </span>
                   </div>
                 </div>
               </div>
-              {/* Floating info pill */}
               <div className="glass-strong absolute -left-6 -bottom-6 rounded-2xl px-3 py-2.5 floaty shadow-xl" style={{ animationDelay: "-2s" }}>
                 <div className="text-[10px] uppercase tracking-widest text-white/70">Live data</div>
                 <div className="text-white text-sm font-semibold">via TVMaze API</div>

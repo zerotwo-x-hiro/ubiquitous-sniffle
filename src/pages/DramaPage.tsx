@@ -3,37 +3,27 @@ import { useMemo } from "react";
 import Poster from "@/components/Poster";
 import DramaCard from "@/components/DramaCard";
 import { useLiveData } from "@/LiveData";
-import type { Drama } from "@/data";
-import type { EnrichedDrama } from "@/api";
-
-type AnyDrama = Drama | EnrichedDrama;
-
-function collectAll(state: ReturnType<typeof useLiveData>): AnyDrama[] {
-  const out: AnyDrama[] = [state.featured];
-  for (const s of state.shelves) out.push(...s.items);
-  out.push(...state.topRated);
-  out.push(...state.comingSoon);
-  out.push(...state.recentlyAdded);
-  for (const c of state.collections) out.push(...c.items);
-  // de-dupe by slug
-  const m = new Map<string, AnyDrama>();
-  for (const d of out) m.set(d.slug, d);
-  return Array.from(m.values());
-}
+import { deriveStatus, statusLabel, canDisplayRating } from "@/lib/status";
 
 export default function DramaPage() {
   const { slug } = useParams();
-  const state = useLiveData();
-  const ALL = useMemo(() => collectAll(state), [state]);
-  const drama = useMemo(() => ALL.find((d) => d.slug === slug) ?? ALL[0], [slug, ALL]);
-  const related = useMemo(
-    () => ALL.filter((d) => d.slug !== drama.slug && d.genres.some((g) => drama.genres.includes(g))).slice(0, 8),
-    [drama, ALL],
-  );
-  const backdrop = (drama as EnrichedDrama).backdrop;
-  const runtime = (drama as EnrichedDrama).runtime;
-  const imdbId = (drama as EnrichedDrama).imdbId;
-  const tvStatus = (drama as EnrichedDrama).status ?? "Completed";
+  const { findBySlug, shelves } = useLiveData();
+  const drama = useMemo(() => findBySlug(slug ?? ""), [findBySlug, slug]);
+  const backdrop = (drama as any).backdrop as string | undefined;
+  const runtime = (drama as any).runtime as number | undefined;
+  const imdbId = (drama as any).imdbId as string | undefined;
+  const tvStatus = (drama as any).status as string | undefined;
+  const nextAir = (drama as any).nextAirDate as string | undefined;
+  const status = deriveStatus({ status: tvStatus, premiered: `${drama.year}-01-01`, nextAirDate: nextAir });
+
+  const related = useMemo(() => {
+    const all: any[] = [];
+    for (const s of shelves) for (const d of s.items) all.push(d);
+    return all
+      .filter((d) => d.slug !== drama.slug)
+      .filter((d) => d.genres.some((g: string) => drama.genres.includes(g)))
+      .slice(0, 8);
+  }, [drama, shelves]);
 
   return (
     <section className="relative z-10 px-4 md:px-8 lg:px-12 py-8">
@@ -56,11 +46,6 @@ export default function DramaPage() {
             <div className="relative rounded-2xl overflow-hidden shadow-2xl floaty" style={{border:"1px solid rgba(255,255,255,.1)"}}>
               <Poster drama={{...drama, title:""}} size="lg" showTitle={false} className="!rounded-none !h-[330px]" />
             </div>
-            <div className="mt-5 grid grid-cols-3 gap-2">
-              {["art-a","art-b","art-c"].map((a,i)=>(
-                <div key={a} className={`${a} aspect-[2/3] rounded-lg overflow-hidden opacity-70 hover:opacity-100 transition card-hover cursor-pointer`} />
-              ))}
-            </div>
           </div>
           <div>
             <span className="kicker"><span className="dot"/>{drama.network ?? "KDramaWorld entry"}</span>
@@ -73,29 +58,33 @@ export default function DramaPage() {
             </h1>
             <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-white/80">
               <span className="rating-pill px-2.5 py-1 rounded-full flex items-center gap-1.5 font-semibold">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffc464"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.43 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
-                {drama.rating > 0 ? drama.rating.toFixed(1) : "Unreleased"}
+                {canDisplayRating(status, drama.rating) ? (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffc464"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.43 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+                    {drama.rating.toFixed(1)} <span className="text-white/60 text-[11px] ml-1 font-normal">TVMaze</span>
+                  </>
+                ) : (
+                  <span className="text-pink-200/90 uppercase tracking-widest text-[10px]">Not rated yet</span>
+                )}
               </span>
               <span className="opacity-80">·</span><span>{drama.year}</span>
               {drama.episodes && <><span className="opacity-80">·</span><span>{drama.episodes} Episodes</span></>}
-              {runtime && <><span className="opacity-80">·</span><span>{runtime} min / ep</span></>}
+              {runtime && <><span className="opacity-80">·</span><span>{runtime} min/ep</span></>}
+              <span className="opacity-80">·</span>
+              <span className="pill rounded-full px-2 py-0.5 text-xs">{statusLabel(status)}</span>
               {drama.genres.map((g)=>(
                 <span key={g} className="pill rounded-full px-2 py-0.5 text-xs">{g}</span>
               ))}
             </div>
             <p className="mt-5 max-w-2xl text-base md:text-lg text-white/85 leading-relaxed">
-              {drama.blurb || "A quiet, unforgettable drama that earns its place in the KDramaWorld canon. Every frame chosen carefully; every silence intentional."}
+              {drama.blurb || "A quiet, unforgettable drama that earns its place in the KDramaWorld canon."}
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3">
-              <button className="btn-primary h-11 px-6 rounded-xl inline-flex items-center gap-2 font-semibold">
+              <Link to="/explore" className="btn-primary h-11 px-6 rounded-xl inline-flex items-center gap-2 font-semibold">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                Watch trailer
-              </button>
-              <button className="btn-ghost h-11 px-5 rounded-xl inline-flex items-center gap-2 font-semibold">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-                Add to list
-              </button>
+                Browse similar
+              </Link>
               {imdbId && (
                 <a href={`https://www.imdb.com/title/${imdbId}/`} target="_blank" rel="noreferrer"
                    className="btn-ghost h-11 px-5 rounded-xl inline-flex items-center gap-2 font-semibold">
@@ -103,7 +92,7 @@ export default function DramaPage() {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
                 </a>
               )}
-              <button className="btn-ghost h-11 w-11 grid place-items-center rounded-xl" aria-label="Share">
+              <button aria-label="Share" className="btn-ghost h-11 w-11 grid place-items-center rounded-xl">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
               </button>
             </div>
@@ -113,7 +102,7 @@ export default function DramaPage() {
                 {k:"Year",     v: drama.year},
                 {k:"Episodes", v: drama.episodes ?? "—"},
                 {k:"Runtime",  v: runtime ? `${runtime} min` : "—"},
-                {k:"Status",   v: tvStatus},
+                {k:"Status",   v: statusLabel(status)},
               ].map(s=>(
                 <div key={s.k} className="glass rounded-xl p-3">
                   <div className="text-[10px] uppercase tracking-widest" style={{color:"rgba(255,255,255,.6)"}}>{s.k}</div>
@@ -121,12 +110,6 @@ export default function DramaPage() {
                 </div>
               ))}
             </div>
-
-            {(drama as EnrichedDrama).fetchError && (
-              <div className="mt-6 text-[11px] text-white/50">
-                Live metadata unavailable right now — showing curated data.
-              </div>
-            )}
           </div>
         </div>
       </div>
