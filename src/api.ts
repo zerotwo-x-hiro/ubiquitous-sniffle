@@ -14,6 +14,7 @@ export type TvMazeShow = {
   summary?: string | null;
   premiered?: string | null;
   ended?: string | null;
+  type?: string | null;
   status?: string | null;
   runtime?: number | null;
   averageRuntime?: number | null;
@@ -101,6 +102,16 @@ function isKoreanDrama(show: TvMazeShow, seed?: Drama): boolean {
   if (/(^|\W)(at-x|tokyo mx|nhk|fuji tv|tbs|mbs|abema|wowow|bbc|itv|comedy central|amc|disney\+|hbo|showtime|oxygen|tnt|zdf|hot3|tv3|show tv|ozone|netflix us|hulu|apple tv\+|smithsonian|history channel|national geographic|cnn|comedy\.tv)($|\W)/.test(chan)) return false;
   // K-pop / variety channels.
   if (/(vlive|weverse|v live|kakao tv)/.test(chan)) return false;
+
+  // Reject non-scripted TVMaze show types outright. TVMaze sets
+  // type="Award Show"|Reality|Talk Show|News|Sports Event|Game Show|Variety
+  // on one-off / non-scripted content (e.g. "Korea Drama Awards" comes back
+  // with genres:["Drama"] but type:"Award Show").
+  const showType = (show.type || "").toLowerCase();
+  if (showType && showType !== "scripted") {
+    // Explicit non-scripted types always reject (Award Show, Reality, etc.).
+    return false;
+  }
 
   // Reject non-drama genres: reality/variety/talk/music/game-show/family-kids
   // (prevents matching variety shows like jTBC's "Night Goblin" against
@@ -366,13 +377,15 @@ export async function fetchRecentKdramas(limit = 12): Promise<EnrichedDrama[]> {
         // reject known K-pop/variety channel content (V Live, Weverse, etc.)
         const chan = (show.network?.name || show.webChannel?.name || "").toLowerCase();
         const isKPopChannel = /(vlive|weverse|v live|kakao tv)/.test(chan);
-        const isReality = (show.genres || []).some((g: string) => /reality|variety|talk|music|game.show/i.test(g));
+        const showType = (show.type || "").toLowerCase();
+        const isNonScripted = showType && showType !== "scripted";
+        const isReality = (show.genres || []).some((g: string) => /reality|variety|talk|music|game.show|news|documentary/i.test(g));
         const isKorean =
           (show.network?.country?.code === "KR" ||
            show.webChannel?.country?.code === "KR" ||
            (show.language || "").toLowerCase() === "korean");
         const isDrama = (show.genres || []).some((g: string) => /drama/i.test(g));
-        if (isKPopChannel || isReality || !(isKorean && isDrama)) continue;
+        if (isKPopChannel || isNonScripted || isReality || !(isKorean && isDrama)) continue;
         seen.add(show.id);
 
         const summary = stripHtml(show.summary);
@@ -430,6 +443,8 @@ export async function fetchSearchTopKorean(limit = 12): Promise<EnrichedDrama[]>
       for (const it of items) {
         const show: TvMazeShow | undefined = it.show;
         if (!show?.id || seen.has(show.id)) continue;
+        const showType = (show.type || "").toLowerCase();
+        if (showType && showType !== "scripted") continue;
         seen.add(show.id);
         const summary = stripHtml(show.summary);
         const year = yearFrom(show.premiered) ?? new Date().getFullYear();
