@@ -279,3 +279,12 @@ header.sticky { border-bottom:1px solid var(--border); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+
+/* Final reference details: centered pagination and the title's restrained crimson initial. */
+.hero-pagination { left: 50%; right: auto; transform: translateX(-50%); }
+.hero-hand-script { z-index: 2; }
+:root:not(.light) .hero-title::first-letter { color: var(--accent); }
+@media (max-width: 767px) {
+  .hero-pagination { left: 50%; right: auto; transform: translateX(-50%); }
+}
