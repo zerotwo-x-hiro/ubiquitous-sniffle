@@ -24,9 +24,9 @@
 
 const BASE = "https://api.tvmaze.com/shows";
 const MIN_YEAR = 1990;
-const PAGE_BUDGET_MS = 50_000;
-const CONCURRENCY = 2;
-const INTER_REQ_DELAY_MS = 220;
+const PAGE_BUDGET_MS = 55_000;
+const CONCURRENCY = 1;
+const INTER_REQ_DELAY_MS = 30;
 const MAX_PAGES = 700;
 
 let _cached = null;
