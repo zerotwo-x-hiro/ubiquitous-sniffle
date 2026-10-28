@@ -61,7 +61,7 @@ export default function Hero() {
         <div className="absolute inset-0 pointer-events-none" style={{ background: "var(--hero-fade)" }} />
 
         <div className="hero-hand-script absolute top-[18%] right-[8%] hidden lg:block" aria-hidden="true">
-          <span className="hand-script text-[28px] md:text-[34px]">{"Small\\nTown\\nBig\\nHappiness"}</span>
+          <span className="hand-script text-[28px] md:text-[34px]">{"Small\nTown\nBig\nHappiness"}</span>
         </div>
 
         <div className="hero-content absolute inset-0 flex items-end">
