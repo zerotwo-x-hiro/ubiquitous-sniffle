@@ -1,15 +1,39 @@
 import { Link, useParams } from "react-router-dom";
 import { useMemo } from "react";
-import { discover, recent, romance, thrillers, fantasy, topRated, comingSoon, collections, recentlyAdded, featured } from "@/data";
 import Poster from "@/components/Poster";
 import DramaCard from "@/components/DramaCard";
+import { useLiveData } from "@/LiveData";
+import type { Drama } from "@/data";
+import type { EnrichedDrama } from "@/api";
 
-const ALL = [featured, ...discover, ...recent, ...romance, ...thrillers, ...fantasy, ...topRated, ...comingSoon, ...recentlyAdded, ...collections.flatMap(c => c.items)];
+type AnyDrama = Drama | EnrichedDrama;
+
+function collectAll(state: ReturnType<typeof useLiveData>): AnyDrama[] {
+  const out: AnyDrama[] = [state.featured];
+  for (const s of state.shelves) out.push(...s.items);
+  out.push(...state.topRated);
+  out.push(...state.comingSoon);
+  out.push(...state.recentlyAdded);
+  for (const c of state.collections) out.push(...c.items);
+  // de-dupe by slug
+  const m = new Map<string, AnyDrama>();
+  for (const d of out) m.set(d.slug, d);
+  return Array.from(m.values());
+}
 
 export default function DramaPage() {
   const { slug } = useParams();
-  const drama = useMemo(() => ALL.find((d) => d.slug === slug) ?? ALL[0], [slug]);
-  const related = useMemo(() => ALL.filter((d) => d.slug !== drama.slug && d.genres.some((g) => drama.genres.includes(g))).slice(0,8), [drama]);
+  const state = useLiveData();
+  const ALL = useMemo(() => collectAll(state), [state]);
+  const drama = useMemo(() => ALL.find((d) => d.slug === slug) ?? ALL[0], [slug, ALL]);
+  const related = useMemo(
+    () => ALL.filter((d) => d.slug !== drama.slug && d.genres.some((g) => drama.genres.includes(g))).slice(0, 8),
+    [drama, ALL],
+  );
+  const backdrop = (drama as EnrichedDrama).backdrop;
+  const runtime = (drama as EnrichedDrama).runtime;
+  const imdbId = (drama as EnrichedDrama).imdbId;
+  const tvStatus = (drama as EnrichedDrama).status ?? "Completed";
 
   return (
     <section className="relative z-10 px-4 md:px-8 lg:px-12 py-8">
@@ -20,6 +44,9 @@ export default function DramaPage() {
       </Link>
       <div className="relative glass-strong rounded-3xl overflow-hidden">
         <div className={`absolute inset-0 ${drama.art}`} />
+        {backdrop && (
+          <img src={backdrop} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover opacity-50" />
+        )}
         <div className="absolute inset-0"
              style={{background:"linear-gradient(120deg, rgba(11,6,20,.92) 10%, rgba(11,6,20,.65) 60%, rgba(11,6,20,.3) 100%)"}} />
         <div className="absolute -top-20 -right-20 w-[500px] h-[500px] rounded-full blur-3xl opacity-50 aurora"
@@ -51,6 +78,7 @@ export default function DramaPage() {
               </span>
               <span className="opacity-80">·</span><span>{drama.year}</span>
               {drama.episodes && <><span className="opacity-80">·</span><span>{drama.episodes} Episodes</span></>}
+              {runtime && <><span className="opacity-80">·</span><span>{runtime} min / ep</span></>}
               {drama.genres.map((g)=>(
                 <span key={g} className="pill rounded-full px-2 py-0.5 text-xs">{g}</span>
               ))}
@@ -68,6 +96,13 @@ export default function DramaPage() {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
                 Add to list
               </button>
+              {imdbId && (
+                <a href={`https://www.imdb.com/title/${imdbId}/`} target="_blank" rel="noreferrer"
+                   className="btn-ghost h-11 px-5 rounded-xl inline-flex items-center gap-2 font-semibold">
+                  IMDb
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
+                </a>
+              )}
               <button className="btn-ghost h-11 w-11 grid place-items-center rounded-xl" aria-label="Share">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
               </button>
@@ -75,10 +110,10 @@ export default function DramaPage() {
 
             <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl">
               {[
-                {k:"Director", v:"Kim Jin-won"},
-                {k:"Writer",   v:"Park Hae-young"},
-                {k:"Episodes", v: drama.episodes ?? "16"},
-                {k:"Airing",   v:"Completed"},
+                {k:"Year",     v: drama.year},
+                {k:"Episodes", v: drama.episodes ?? "—"},
+                {k:"Runtime",  v: runtime ? `${runtime} min` : "—"},
+                {k:"Status",   v: tvStatus},
               ].map(s=>(
                 <div key={s.k} className="glass rounded-xl p-3">
                   <div className="text-[10px] uppercase tracking-widest" style={{color:"rgba(255,255,255,.6)"}}>{s.k}</div>
@@ -86,6 +121,12 @@ export default function DramaPage() {
                 </div>
               ))}
             </div>
+
+            {(drama as EnrichedDrama).fetchError && (
+              <div className="mt-6 text-[11px] text-white/50">
+                Live metadata unavailable right now — showing curated data.
+              </div>
+            )}
           </div>
         </div>
       </div>

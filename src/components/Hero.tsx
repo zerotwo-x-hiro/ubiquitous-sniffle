@@ -1,15 +1,22 @@
 import { Link } from "react-router-dom";
-import { featured } from "@/data";
 import Poster from "./Poster";
+import { useLiveData } from "@/LiveData";
 
 export default function Hero() {
+  const { featured } = useLiveData();
+  const backdrop = (featured as any).backdrop as string | undefined;
+
   return (
     <section className="relative z-10 px-4 md:px-8 lg:px-12 pt-8 md:pt-14 pb-4">
       <div className="relative glass-strong rounded-3xl overflow-hidden">
         {/* Backdrop */}
         <div className={`absolute inset-0 ${featured.art}`} aria-hidden />
+        {backdrop && (
+          <img src={backdrop} alt="" aria-hidden
+               className="absolute inset-0 w-full h-full object-cover opacity-60" />
+        )}
         <div className="absolute inset-0"
-             style={{ background: "linear-gradient(120deg, rgba(11,6,20,.85) 10%, rgba(11,6,20,.55) 50%, rgba(11,6,20,.2) 100%)" }} />
+             style={{ background: "linear-gradient(120deg, rgba(11,6,20,.88) 10%, rgba(11,6,20,.55) 50%, rgba(11,6,20,.25) 100%)" }} />
         <div className="absolute -top-16 -right-10 w-[480px] h-[480px] rounded-full aurora"
              style={{ background: "radial-gradient(circle, rgba(255,94,168,.5), transparent 60%)" }} aria-hidden />
         <div className="absolute -bottom-20 -left-20 w-[520px] h-[520px] rounded-full aurora"
@@ -19,10 +26,10 @@ export default function Hero() {
           <div>
             <span className="kicker">
               <span className="dot" />
-              {featured.tagline}
+              {featured.tagline ?? "Top Pick · Featured K-Drama"}
             </span>
             <h1 className="section-title mt-5 text-4xl md:text-6xl lg:text-7xl leading-[0.95]" style={{ color:"#fff" }}>
-              {featured.title.split(" ").map((w,i)=> (
+              {featured.title.split(" ").map((w,i)=>(
                 <span key={i} className={i === 1 ? "gradient-text italic" : ""}>
                   {w}{i < featured.title.split(" ").length-1 ? " " : ""}
                 </span>
@@ -35,14 +42,18 @@ export default function Hero() {
               </span>
               <span className="opacity-80">·</span>
               <span>{featured.year}</span>
-              <span className="opacity-80">·</span>
-              <span>{featured.episodes} Episodes</span>
-              <span className="opacity-80">·</span>
-              <span className="flex gap-1.5">
-                {featured.genres.map((g)=>(
-                  <span key={g} className="pill rounded-full px-2 py-0.5 text-xs">{g}</span>
-                ))}
-              </span>
+              {featured.episodes && (<><span className="opacity-80">·</span><span>{featured.episodes} Episodes</span></>)}
+              {featured.network && (<><span className="opacity-80">·</span><span>{featured.network}</span></>)}
+              {featured.genres.length > 0 && (
+                <>
+                  <span className="opacity-80">·</span>
+                  <span className="flex gap-1.5">
+                    {featured.genres.slice(0,3).map((g)=>(
+                      <span key={g} className="pill rounded-full px-2 py-0.5 text-xs">{g}</span>
+                    ))}
+                  </span>
+                </>
+              )}
             </div>
             <p className="mt-5 max-w-xl text-base md:text-lg text-white/85 leading-relaxed">
               {featured.blurb}
@@ -61,7 +72,7 @@ export default function Hero() {
                   <div key={a} className={`w-8 h-8 rounded-full border-2 ${a}`} style={{ borderColor:"rgba(0,0,0,.5)" }} />
                 ))}
               </div>
-              <div className="text-xs text-white/70"><b className="text-white">12k+</b> viewers this week</div>
+              <div className="text-xs text-white/70"><b className="text-white">Live</b> from TVMaze</div>
             </div>
           </div>
 
@@ -77,21 +88,22 @@ export default function Hero() {
                     {featured.title}
                   </div>
                   <div className="text-white/70 text-xs uppercase tracking-widest mt-1">
-                    {featured.network} · {featured.year}
+                    {featured.network ?? "tvN"} · {featured.year}
                   </div>
                   <div className="mt-3 h-1 bg-white/20 rounded-full overflow-hidden">
                     <div className="h-full w-[64%] rounded-full"
                          style={{ background: "linear-gradient(90deg,#ff5ea8,#9b5cff,#4aa8ff)" }} />
                   </div>
                   <div className="mt-1.5 flex justify-between text-[11px] text-white/70">
-                    <span>Continue · Ep 7</span><span>43 min left</span>
+                    <span>{(featured as any).status === "Running" ? "Now airing" : "Top Pick"}</span>
+                    <span>★ {featured.rating.toFixed(1)}</span>
                   </div>
                 </div>
               </div>
               {/* Floating info pill */}
               <div className="glass-strong absolute -left-6 -bottom-6 rounded-2xl px-3 py-2.5 floaty shadow-xl" style={{ animationDelay: "-2s" }}>
-                <div className="text-[10px] uppercase tracking-widest text-white/70">Now trending</div>
-                <div className="text-white text-sm font-semibold">#1 in 14 countries</div>
+                <div className="text-[10px] uppercase tracking-widest text-white/70">Live data</div>
+                <div className="text-white text-sm font-semibold">via TVMaze API</div>
               </div>
             </div>
           </div>
