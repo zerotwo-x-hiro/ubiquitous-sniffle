@@ -79,35 +79,51 @@ function pickRating(show: TvMazeShow): number {
   return Math.round(r * 10) / 10;
 }
 
+/** Normalise a title for fuzzy comparison (lowercase, strip non-alphanumeric). */
+function normTitle(s: string): string {
+  return (s || "").toLowerCase().replace(/[^a-z0-9가-힣]/g, "");
+}
+
 /** True when a TVMaze show is likely the Korean drama we want. */
-function isKoreanDrama(show: TvMazeShow): boolean {
+function isKoreanDrama(show: TvMazeShow, seed?: Drama): boolean {
   const cc = show.network?.country?.code ?? show.webChannel?.country?.code;
   const chan = (show.network?.name || show.webChannel?.name || "").toLowerCase();
   const lang = (show.language || "").toLowerCase();
 
-  // Hard blocklist of non-Korean channels/studios (takes precedence before
-  // any fuzzy keyword matches — e.g. AMC's "Bunny" must not pass because
-  // its network country is US, not KR).
-  if (/(^|\W)(at-x|tokyo mx|nhk|fuji tv|tbs|mbs|abema|wowow|bbc|itv|comedy central|amc|disney\+|hbo|showtime|oxygen|tnt|zdf|hot3|tv3|show tv|ozone|netflix us|hulu|apple tv\+)($|\W)/.test(chan)) return false;
-  // K-pop / variety channels that leak into schedule.
+  // Hard blocklist of non-Korean channels/studios (takes precedence).
+  if (/(^|\W)(at-x|tokyo mx|nhk|fuji tv|tbs|mbs|abema|wowow|bbc|itv|comedy central|amc|disney\+|hbo|showtime|oxygen|tnt|zdf|hot3|tv3|show tv|ozone|netflix us|hulu|apple tv\+|smithsonian|history channel|national geographic|cnn|comedy\.tv)($|\W)/.test(chan)) return false;
+  // K-pop / variety channels.
   if (/(vlive|weverse|v live|kakao tv)/.test(chan)) return false;
 
-  // Strong positive: official country code is KR.
-  if (cc === "KR") return true;
-  // Strong positive: declared language is Korean.
-  if (lang === "korean") return true;
-
-  // If a country code IS declared but it's NOT KR, reject outright
-  // (e.g. US/JP/DE/CN/IN/TR show can't be a K-drama just because someone
-  // tagged "drama" in the summary).
+  // If country code is declared and it's NOT KR -> reject outright.
   if (cc && cc !== "KR") return false;
 
-  // Fuzzy: only accept if name/summary contain an unmistakable Korean
-  // network keyword (tvN, JTBC, SBS, KBS, MBC, OCN, TVING, wavve, Kakao,
-  // ENA) OR explicitly "korean" / "k-drama" / "kdrama".
+  // Title sanity: if seed title is provided, require fuzzy name match.
+  // Prevents TVMaze /singlesearch from returning unrelated shows (e.g.
+  // "Crash Landing on You" -> AMC's "Bunny") when the API ignores the query.
+  if (seed && show.name) {
+    const a = normTitle(seed.title);
+    const b = normTitle(show.name);
+    // Accept if either contains the other, or they share a long enough token.
+    if (!(a.includes(b) || b.includes(a))) {
+      // Try word overlap: at least one substantive token (>=4 chars) in common.
+      const aTokens = new Set(a.split(/\s+/).filter((t) => t.length >= 4));
+      const bTokens = new Set(b.split(/\s+/).filter((t) => t.length >= 4));
+      let shared = 0;
+      aTokens.forEach((t) => { if (bTokens.has(t)) shared++; });
+      // Require at least one shared substantive token.
+      if (shared === 0 && a.length >= 6 && b.length >= 6) return false;
+    }
+  }
+
+  // Accept: official country == KR OR language == Korean.
+  if (cc === "KR") return true;
+  if (lang === "korean") return true;
+
+  // Fuzzy: name/summary contains an unmistakable Korean keyword.
   const blob = (show.name + " " + stripHtml(show.summary)).toLowerCase();
-  if (/\b(korean|k-drama|kdrama)\b/.test(blob)) return true;
-  if (/\b(kbs|sbs|mbc|tvn|jtbc|ocn|tving|wavve|kakao|ena)\b/.test(blob)) return true;
+  if (/\b(korean|k-drama|kdrama|south korea)\b/.test(blob)) return true;
+  if (/\b(kbs|sbs|mbc|tvn|jtbc|ocn|tving|wavve|kakao|ena|netflix korea)\b/.test(blob)) return true;
 
   return false;
 }
@@ -143,10 +159,12 @@ export async function fetchDramaByTitle(seed: Drama, options?: { episodes?: bool
     }
     const show: TvMazeShow = await res.json();
 
-    // ALWAYS validate: reject non-Korean shows and year mismatches regardless
-    // of whether we fetched by id or by title. TVMaze ids can be wrong (e.g.
-    // 4711 is the anime "Goblin Slayer", not the K-drama "Goblin").
-    if (!isKoreanDrama(show)) return { ...seed };
+    // ALWAYS validate: reject non-Korean shows, year mismatches, and unrelated
+    // titles regardless of whether we fetched by id or by title. TVMaze ids
+    // can be wrong (e.g. 4711 is the anime "Goblin Slayer"), and /singlesearch
+    // can return semantically unrelated matches ("Crash Landing on You" ->
+    // AMC's "Bunny", "Secret Garden" -> Smithsonian "Mystery Files").
+    if (!isKoreanDrama(show, seed)) return { ...seed };
     if (!yearMatches(show, seed.year)) return { ...seed };
 
     const year = yearFrom(show.premiered) ?? seed.year;
