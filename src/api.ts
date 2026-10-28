@@ -40,7 +40,7 @@ export type EnrichedDrama = Drama & {
   _needsImageRefetch?: number; // internal: tvmaze id to fetch image for if initial hit lacked it
 };
 
-const BASE = "https://api.tvmaze.com";
+const BASE = "/api/tvmaze";
 
 /** Strip HTML tags returned in TVMaze summary fields. */
 function stripHtml(html?: string | null): string {

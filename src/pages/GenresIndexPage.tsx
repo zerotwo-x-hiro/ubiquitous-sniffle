@@ -2,9 +2,14 @@ import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useLiveData } from "@/LiveData";
 import { genres as genreDefs } from "@/data";
+import { useSeo } from "@/lib/seo";
 // DramaCard kept out to keep tiles compact / avoid heavy posters
 
 export default function GenresIndexPage() {
+  useSeo({
+    title: "Genres & moods",
+    description: "Browse K-dramas by genre — romance, thriller, fantasy, slice-of-life, and more — with live counts from the archive.",
+  });
   const { shelves, genreCounts } = useLiveData();
   const all = useMemo(() => {
     const m = new Map();

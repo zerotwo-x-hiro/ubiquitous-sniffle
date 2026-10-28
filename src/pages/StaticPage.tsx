@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useSeo } from "@/lib/seo";
 
 type Block = { h?: string; p?: string; bullets?: string[] };
 
@@ -13,6 +14,10 @@ export default function StaticPage({
   updated: string;
   blocks: Block[];
 }) {
+  useSeo({
+    title,
+    description: blocks[0]?.p?.slice(0, 160) || `${title} on KDramaWorld.`,
+  });
   return (
     <section className="relative z-10 px-4 md:px-8 lg:px-12 py-10 md:py-16">
       <div className="max-w-3xl mx-auto prose-invert">

@@ -1,6 +1,11 @@
 import { Link } from "react-router-dom";
+import { useSeo } from "@/lib/seo";
 
 export default function AboutPage() {
+  useSeo({
+    title: "About",
+    description: "KDramaWorld is a small, opinionated, ad-free archive of Korean dramas — hand-verified, no fabricated data, no tracking.",
+  });
   return (
     <section className="relative z-10 px-4 md:px-8 lg:px-12 py-10 md:py-16">
       <div className="max-w-3xl mx-auto">

@@ -4,6 +4,7 @@ import Poster from "@/components/Poster";
 import DramaCard from "@/components/DramaCard";
 import { useLiveData } from "@/LiveData";
 import { deriveStatus, statusLabel, canDisplayRating } from "@/lib/status";
+import { useSeo } from "@/lib/seo";
 import type { Drama } from "@/data";
 import type { EnrichedDrama } from "@/api";
 
@@ -24,6 +25,17 @@ export default function DramaPage() {
     status: tvStatus,
     premiered: drama.year ? `${drama.year}-01-01` : undefined,
     ended: tvStatus === "Ended" && drama.year ? `${drama.year}-12-31` : undefined,
+  });
+  const poster = (drama as EnrichedDrama).poster;
+  const ratingLine = canDisplayRating(status, drama.rating)
+    ? `★ ${drama.rating.toFixed(1)} on TVMaze`
+    : "";
+  const metaBits = [drama.year, drama.network, ...drama.genres].filter(Boolean).join(" · ");
+  useSeo({
+    title: `${drama.title} (${drama.year})`,
+    description: `${drama.title} — ${ratingLine ? ratingLine + " · " : ""}${metaBits}. ${drama.blurb || ""}`.slice(0, 200),
+    image: poster || (drama as EnrichedDrama).backdrop,
+    type: "article",
   });
 
   const related = useMemo(() => {

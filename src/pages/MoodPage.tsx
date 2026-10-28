@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useLiveData } from "@/LiveData";
 import DramaCard from "@/components/DramaCard";
+import { useSeo } from "@/lib/seo";
 
 type Mood = {
   eyebrow: string;
@@ -50,6 +51,11 @@ export default function MoodPage({ kind }: { kind: keyof typeof MOODS }) {
   const mood = MOODS[kind];
   const { findBySlug } = useLiveData();
   const [open, setOpen] = useState<number | null>(0);
+
+  useSeo({
+    title: mood.title,
+    description: mood.blurb,
+  });
 
   const resolved = useMemo(() =>
     mood.prompts.map((p) => ({

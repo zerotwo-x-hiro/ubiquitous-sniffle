@@ -1,12 +1,17 @@
 import { useMemo, useState } from "react";
 import { useLiveData } from "@/LiveData";
 import DramaCard from "@/components/DramaCard";
+import { useSeo } from "@/lib/seo";
 import type { AnyDrama } from "@/LiveData";
 
 type Sort = "top-rated" | "newest" | "oldest" | "title";
 
 export default function ExplorePage() {
   const { shelves, recentlyAdded, findBySlug, liveCount } = useLiveData();
+  useSeo({
+    title: "Explore",
+    description: "Browse the full KDramaWorld archive — filter by genre, sort by rating or year, search titles and networks.",
+  });
   const [query, setQuery] = useState("");
   const [genreFilter, setGenreFilter] = useState<string>("all");
   const [sort, setSort] = useState<Sort>("top-rated");

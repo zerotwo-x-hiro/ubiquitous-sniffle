@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useSeo } from "@/lib/seo";
 
 const SOURCES = [
   {
@@ -28,6 +29,10 @@ const SOURCES = [
 ];
 
 export default function SourcesPage() {
+  useSeo({
+    title: "Data sources",
+    description: "Where KDramaWorld gets its data — TVMaze primary, TMDB/OMDb server-side only, MyDramaList link-only. Ratings are always labelled by source.",
+  });
   return (
     <section className="relative z-10 px-4 md:px-8 lg:px-12 py-10 md:py-16">
       <div className="max-w-3xl mx-auto">
