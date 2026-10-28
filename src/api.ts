@@ -204,8 +204,11 @@ export async function fetchDramaByTitle(seed: Drama, options?: { episodes?: bool
   let lastErr: Error | null = null;
 
   function scoreCandidate(e: EnrichedDrama): number {
-    // Prefer results that have a poster, an explicit network, and a summary.
-    return (e.poster ? 100 : 0) + (e.network ? 10 : 0) + (e.summaryText ? 5 : 0) + (e.rating > 0 ? 2 : 0);
+    // Heavily prefer results that have a poster. Network, summary, rating are
+    // tie-breakers. Poster MUST be present for the candidate to beat one that
+    // does — a title+rating without a real image is never better than a real
+    // image match (we fall back to gradient posters only when everything fails).
+    return (e.poster ? 10_000 : 0) + (e.network ? 100 : 0) + (e.summaryText ? 10 : 0) + (e.rating > 0 ? 2 : 0) + (e.backdrop ? 1 : 0);
   }
 
   function consider(show: TvMazeShow) {
