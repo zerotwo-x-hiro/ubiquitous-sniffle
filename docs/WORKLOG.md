@@ -63,3 +63,26 @@ Start: 2026-10-28 (Asia/Calcutta)
 - [ ] Before/after screenshots
 - [ ] All P0/P1 fixed
 - [ ] README + .env.example updated
+
+## Hotfix 3–6: validator hardening (commits 0a205f7, 659eb29, ebad4d0, 97a3d31)
+
+After Hotfix 2 deployed, live homepage still showed wrong matches:
+- "Crash Landing on You" → AMC "Bunny" (2019 US comedy)
+- "Secret Garden" → Smithsonian Channel "Mystery Files" (2010 documentary)
+- Several formerly-hardcoded tvmazeIds pointed at non-KR shows (Mouse→RU show, etc.)
+
+Sandbox egress to api.tvmaze.com is blocked, so we couldn't verify each id
+individually. Stripped all hardcoded tvmazeIds (Hotfix 3) and rewrote
+isKoreanDrama() with defense-in-depth (Hotfix 4/5/6):
+1. Hard channel blocklist first (AMC, BBC, HBO, NHK, Smithsonian, …).
+2. Reject K-pop/variety channels (V Live, Weverse, Kakao TV).
+3. Reject outright if network.country is declared and not KR.
+4. Title fuzzy match against curated seed — must share a ≥3-char word token
+   OR one title must contain the other. (Hotfix 6 fixed a tokenizer bug
+   where spaces were stripped before splitting.)
+5. Accept on country==KR or language==korean.
+6. Only then fall back to fuzzy keyword scan (tvN, JTBC, korean, …).
+
+Verified live on production: every curated card now shows correct KR title,
+network (tvN/SBS/KBS/ENA/Netflix-KR/OCN/jTBC/KBS2/MBC) and year. Goblin page
+shows 8.6 TVMaze · 2016 · Ended · Fantasy/Romance. Bundle 236 KB / 73 KB gz.
