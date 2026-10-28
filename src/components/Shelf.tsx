@@ -1,8 +1,10 @@
 import DramaCard from "./DramaCard";
-import type { Shelf } from "@/data";
+import type { Drama } from "@/data";
 import { Link } from "react-router-dom";
 
-export default function Shelf({ shelf }: { shelf: Shelf }) {
+type ShelfLike = { id: string; title: string; eyebrow?: string; items: Array<Drama | any> };
+
+export default function Shelf({ shelf }: { shelf: ShelfLike }) {
   return (
     <section className="relative z-10 px-4 md:px-8 lg:px-12 py-8 md:py-10">
       <div className="flex items-end justify-between gap-4 mb-5">

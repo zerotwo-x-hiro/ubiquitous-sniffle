@@ -1,25 +1,26 @@
 import { Link } from "react-router-dom";
-import { topRated } from "@/data";
 import Poster from "./Poster";
+import { useLiveData } from "@/LiveData";
 
 export default function TopRated() {
+  const { topRated } = useLiveData();
   return (
     <section className="relative z-10 px-4 md:px-8 lg:px-12 py-8 md:py-12">
       <div className="grid lg:grid-cols-[1fr_2fr] gap-8 items-start">
         <div className="glass-strong rounded-3xl p-6 md:p-8 lg:sticky lg:top-24">
-          <span className="kicker">The canon</span>
+          <span className="kicker">The canon · LIVE</span>
           <h2 className="section-title mt-4 text-3xl md:text-4xl leading-tight">
             Top Rated <span className="gradient-text italic">K-Dramas</span>
           </h2>
           <p className="mt-3 text-sm md:text-base" style={{ color:"var(--text-muted)" }}>
-            The highest audience scores among the entries KDramaWorld has verified by hand — cast, artwork and air dates all on record.
+            The highest audience scores, pulled live from TVMaze — posters, ratings and metadata refreshed as shows air.
           </p>
           <Link to="/discover?sort=rating" className="btn-primary mt-5 h-11 px-5 rounded-xl inline-flex items-center gap-2 font-semibold text-sm">
             View all
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
           </Link>
           <div className="mt-6 text-[11px] uppercase tracking-widest" style={{ color:"var(--text-dim)" }}>
-            Scores from TMDB audience ratings · verified entries only
+            Live audience scores · refreshed from TVMaze API
           </div>
         </div>
 
