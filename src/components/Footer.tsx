@@ -26,7 +26,7 @@ export default function Footer() {
           {[
             { h: "Explore", links: [["/explore","Browse all"],["/discover","Top rated"],["/genres","Genres"],["/actors","Actors"],["/lists","Collections"]] },
             { h: "Features", links: [["/midnight-watchlist","Midnight Watchlist"],["/second-lead-syndrome","Second Lead Syndrome"],["/emotional-damage","Emotional Damage Meter"]] },
-            { h: "About", links: [["/","Home"],["/explore","Explore all"],["/lists","Collections"]] },
+            { h: "About", links: [["/about","About"],["/sources","Data sources"],["/privacy","Privacy"],["/terms","Terms"]] },
           ].map((col)=>(
             <div key={col.h}>
               <div className="text-[11px] uppercase tracking-[0.22em] font-semibold mb-4" style={{color:"var(--text-dim)"}}>{col.h}</div>
@@ -46,9 +46,12 @@ export default function Footer() {
             © {new Date().getFullYear()} KDramaWorld. Metadata courtesy of TVMaze (tvmaze.com). Made with ♡ for people who rewatch the same OST.
           </div>
           <div className="flex items-center gap-2">
-            {["𝕏","IG","YT","TT"].map(s=>(
-              <a key={s} href="#" aria-label={s}
-                 className="w-9 h-9 rounded-xl grid place-items-center btn-ghost text-sm font-semibold">{s}</a>
+            {[
+              { label: "X", href: "https://x.com/" },
+              { label: "IG", href: "https://instagram.com/" },
+            ].map(s=>(
+              <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label}
+                 className="w-9 h-9 rounded-xl grid place-items-center btn-ghost text-sm font-semibold">{s.label}</a>
             ))}
           </div>
         </div>

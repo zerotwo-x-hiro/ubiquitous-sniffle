@@ -9,7 +9,7 @@ import type { EnrichedDrama } from "@/api";
 import { fetchDramaByTitle, fetchRecentKdramas, pickArtByTitle, slugifyTitle } from "@/api";
 import { deriveStatus, canDisplayRating } from "@/lib/status";
 
-type AnyDrama = Drama | EnrichedDrama;
+export type AnyDrama = Drama | EnrichedDrama;
 
 type DataState = {
   featured: AnyDrama;
