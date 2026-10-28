@@ -53,7 +53,7 @@ export function deriveStatus(show: ShowLike, now: Date = new Date()): DramaStatu
   const lastAir = parseDate(show.lastAirDate);
   const status = (show.status || "").toLowerCase();
 
-  if (status === "ended" && ended && ended.getTime() <= today.getTime()) return "ended";
+  if (status === "ended") return "ended";
   if (status === "running") return "airing";
   if (nextAir && nextAir.getTime() >= today.getTime()) return "airing";
 
@@ -67,9 +67,8 @@ export function deriveStatus(show: ShowLike, now: Date = new Date()): DramaStatu
   // Premiered, no future episode announced yet, last air date is in the future → airing
   if (lastAir && lastAir.getTime() > today.getTime()) return "airing";
 
-  // Premiered, no ended date, not running → consider ended only if we have an ended date
+  // Explicit ended date in the past → ended.
   if (ended && ended.getTime() <= today.getTime()) return "ended";
-  if (status === "ended") return "ended";
 
   // If it premiered in the past but we don't know ended/next, call it airing if recent (last year) else ended.
   const daysSincePremiere = (today.getTime() - premiered.getTime()) / 86400000;
