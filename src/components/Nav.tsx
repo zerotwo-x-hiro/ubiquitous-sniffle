@@ -33,13 +33,11 @@ export default function Nav() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <button className="btn-ghost hidden sm:inline-flex h-9 px-3 rounded-xl items-center gap-2 text-sm font-medium" aria-label="Search">
+          <Link to="/explore" className="btn-ghost hidden sm:inline-flex h-9 px-3 rounded-xl items-center gap-2 text-sm font-medium" aria-label="Search">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-            <span className="hidden lg:inline">Search dramas…</span>
-            <span className="hidden lg:inline ml-2 text-xs px-1.5 py-0.5 rounded"
-                  style={{ background:"var(--bg-elev)", color:"var(--text-dim)", border:"1px solid var(--border)" }}>⌘K</span>
-          </button>
-          <button onClick={toggle} aria-label="Toggle theme"
+            <span className="hidden lg:inline">Browse dramas</span>
+          </Link>
+          <button onClick={toggle} aria-label={theme === "dark" ? "Switch to light" : "Switch to dark"}
                   className="btn-ghost h-9 w-9 grid place-items-center rounded-xl"
                   title={theme === "dark" ? "Switch to light" : "Switch to dark"}>
             {theme === "dark" ? (
@@ -47,10 +45,6 @@ export default function Nav() {
             ) : (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             )}
-          </button>
-          <button className="btn-primary h-9 px-4 rounded-xl text-sm font-semibold inline-flex items-center gap-1.5">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            Sign in
           </button>
         </div>
       </div>

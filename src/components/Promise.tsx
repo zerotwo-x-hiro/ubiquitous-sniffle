@@ -1,7 +1,7 @@
 const stats = [
-  { k: "Live catalogue", v: "Verified entries, updated weekly" },
-  { k: "Sourced ratings", v: "TMDB & TVMaze, no invented scores" },
-  { k: "Your notes stay yours", v: "Private by default, never sold" },
+  { k: "Live catalogue", v: "Verified entries, updated as shows air" },
+  { k: "Sourced ratings", v: "Audience scores from TVMaze — never invented" },
+  { k: "Your notes stay yours", v: "Private by default, stored in your browser" },
 ];
 
 export default function Promise() {

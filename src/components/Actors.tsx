@@ -8,7 +8,7 @@ export default function Actors() {
           <div className="text-[11px] uppercase tracking-[0.22em] font-semibold mb-2" style={{color:"var(--text-dim)"}}>On screen</div>
           <h2 className="section-title text-2xl md:text-3xl">The faces of the archive.</h2>
           <p className="mt-2 max-w-xl text-sm" style={{color:"var(--text-muted)"}}>
-            Portraits and credits are drawn from the archive's verified cast metadata. No invented biographies.
+            Cast and filmography are loaded from TVMaze. Filmographies only link to dramas in our catalogue.
           </p>
         </div>
         <a href="/actors" className="hidden sm:inline-flex items-center gap-1 text-sm font-semibold" style={{color:"var(--text-muted)"}}>
@@ -23,16 +23,20 @@ export default function Actors() {
               <div className={`relative aspect-[3/4] rounded-xl overflow-hidden ${a.art}`}>
                 <div className="absolute inset-0"
                      style={{background:"radial-gradient(circle at 50% 30%, rgba(255,255,255,.35), transparent 60%)"}} />
-                <div className="absolute inset-x-0 bottom-0 p-2"
+                <div className="absolute inset-x-0 bottom-0 p-3"
                      style={{background:"linear-gradient(180deg, transparent, rgba(0,0,0,.8))"}}>
-                  <div className="text-white font-display italic text-lg leading-none drop-shadow-lg">{a.name.split(" ")[0]}</div>
-                  <div className="text-white font-display italic text-lg leading-none drop-shadow-lg">{a.name.split(" ").slice(1).join(" ")}</div>
+                  <div className="text-white font-display italic text-lg leading-none drop-shadow-lg">
+                    {a.name.split(" ").slice(0,-1).join(" ")}
+                  </div>
+                  <div className="text-white font-display italic text-lg leading-none drop-shadow-lg">
+                    {a.name.split(" ").slice(-1)[0]}
+                  </div>
                 </div>
               </div>
               <div className="mt-2 px-1 text-center">
                 <div className="font-semibold text-sm truncate">{a.name}</div>
                 <div className="text-[11px] mt-0.5" style={{color:"var(--text-muted)"}}>
-                  {a.dramas} dramas{a.leads?` · ${a.leads} lead`:""}
+                  Cast from TVMaze
                 </div>
               </div>
             </div>

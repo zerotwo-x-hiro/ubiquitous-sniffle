@@ -13,9 +13,10 @@ import RecentlyAdded from "@/components/RecentlyAdded";
 import Footer from "@/components/Footer";
 import Placeholder from "@/pages/Placeholder";
 import DramaPage from "@/pages/DramaPage";
-import { shelves } from "@/data";
+import { useLiveData } from "@/LiveData";
 
 function Home() {
+  const { shelves } = useLiveData();
   return (
     <>
       <Hero />
