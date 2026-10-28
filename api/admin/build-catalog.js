@@ -12,10 +12,14 @@
 
 const BASE = "https://api.tvmaze.com/shows";
 const MIN_YEAR = 1990;
-const PAGE_BUDGET_MS = 45_000;
-const CONCURRENCY = 4;
-const PAGE_INTER_PAGE_DELAY_MS = 80;
+const PAGE_BUDGET_MS = 52_000;
+const CONCURRENCY = 2;
+const PAGE_INTER_PAGE_DELAY_MS = 180;
 const MAX_PAGES = 600;
+
+// Global (per-invocation) backoff flag: if one worker sees a 429, every
+// worker pauses briefly instead of hammering and compounding 429s.
+let globalBackoffUntil = 0;
 
 // In-memory catalog cache (module-level) — survives across warm lambda
 // invocations so subsequent ?year= slices (or a retry) don't re-paginate
@@ -60,16 +64,20 @@ function compact(s) {
   };
 }
 
-async function fetchJson(url, signal, retries = 4) {
+async function fetchJson(url, signal, retries = 3) {
   for (let a = 0; a < retries; a++) {
     try {
+      // Respect global backoff.
+      const waitMs = globalBackoffUntil - Date.now();
+      if (waitMs > 0) await new Promise((r) => setTimeout(r, waitMs));
       const res = await fetch(url, {
         signal,
         headers: { "Accept": "application/json", "User-Agent": "KDramaWorld/1.0 (catalog-builder)" },
       });
       if (res.status === 404) return null;
       if (res.status === 429) {
-        const w = Number(res.headers.get("retry-after")) || 5;
+        const w = Number(res.headers.get("retry-after")) || 8;
+        globalBackoffUntil = Date.now() + w * 1000;
         await new Promise((r) => setTimeout(r, w * 1000));
         continue;
       }
@@ -77,7 +85,9 @@ async function fetchJson(url, signal, retries = 4) {
       return await res.json();
     } catch (e) {
       if (e.name === "AbortError") throw e;
-      await new Promise((r) => setTimeout(r, 2 ** a * 500));
+      // Treat network errors as backoff signal.
+      globalBackoffUntil = Math.max(globalBackoffUntil, Date.now() + 1500);
+      await new Promise((r) => setTimeout(r, 2 ** a * 1000));
     }
   }
   throw new Error(`fetch failed: ${url}`);
