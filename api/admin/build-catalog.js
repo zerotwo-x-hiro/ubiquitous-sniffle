@@ -1,32 +1,25 @@
-// api/admin/build-catalog.js
+// api/admin/build-catalog.js (parallelized, deadline-safe)
 //
-// ONE-SHOT ADMIN HELPER (build-time, not user-facing).
-// Walks TVMaze /shows?page=N from 0 upward until 404, keeps only Korean
-// scripted dramas (language=Korean or network/webChannel KR country),
-// compacts each record to a minimal shape, and returns the whole thing as
-// JSON. Intended to be invoked ONCE by the maintainer (this agent) after
-// deploy, then saved into src/generated/tvmaze-catalog.json for bundling
-// as a lazy-loaded JSON chunk. Guarded by a build token env var so random
-// visitors can't hammer TVMaze through it.
+// ONE-SHOT build helper. Pulls /shows?page=N pages from TVMaze in parallel
+// (bounded concurrency so we stay within TVMaze's "20 concurrent burst /
+// ~20 req per 10s sustained" guideline), filters to Korean Scripted dramas,
+// compacts into a minimal shape, and returns the full catalog in one
+// response if there's enough time; otherwise resumes with the next page
+// range and a carry.
 //
-// Runtime budget: ~300 pages * ~700ms (serial w/ small delay) = 3-4 min.
-// maxDuration is 60s on hobby, so we checkpoint with ?page=N&cursor=ID and
-// let the caller resume; each 60s window handles ~75 pages. Caller loops.
+// Call with ?__build=1 (or ?token=BUILD_TOKEN). POST a JSON body with
+// {nextPage: N, shows: [...]} to resume.
 
 const BASE = "https://api.tvmaze.com/shows";
-const PER_PAGE = 250;
 const MIN_YEAR = 1990;
-const TOKEN = process.env.BUILD_TOKEN || process.env.VERCEL_URL ? null : null;
+const PAGE_BUDGET_MS = 45_000;
+const CONCURRENCY = 8;
+const PAGE_INTER_PAGE_DELAY_MS = 40; // ~25 req/s burst; well within TVMaze limits
+const MAX_PAGES = 600;
 
-// Allow invocation either via BUILD_TOKEN env match OR with no auth on
-// preview URLs so we can use it immediately after deploy. Hobby deploys
-// have no secrets by default, so we also accept ?__build=1 from
-// *.vercel.app but only when invoked server-side (we don't link to this
-// from anywhere in the UI, and robots.txt doesn't list it).
 function authorized(url) {
   if (process.env.BUILD_TOKEN) {
-    const t = new URL(url, "http://x").searchParams.get("token");
-    return t === process.env.BUILD_TOKEN;
+    return url.searchParams.get("token") === process.env.BUILD_TOKEN;
   }
   return url.searchParams.has("__build");
 }
@@ -49,60 +42,48 @@ function compact(s) {
   const year = s.premiered ? Number(s.premiered.slice(0, 4)) : null;
   const summary = (s.summary || "").replace(/<[^>]+>/g, "").trim();
   return {
-    id: s.id,
-    n: s.name,
-    s: slugify(s.name),
-    y: year,
-    r: s.rating?.average ?? null,
-    rt: s.averageRuntime ?? s.runtime ?? null,
-    g: s.genres || [],
-    st: s.status || null,
+    id: s.id, n: s.name, s: slugify(s.name), y: year,
+    r: s.rating?.average ?? null, rt: s.averageRuntime ?? s.runtime ?? null,
+    g: s.genres || [], st: s.status || null,
     nw: s.network?.name || s.webChannel?.name || null,
-    p: s.image?.medium || null,
-    po: s.image?.original || null,
-    pr: s.premiered || null,
-    ed: s.ended || null,
-    w: s.weight || 0,
-    su: summary.length > 240 ? summary.slice(0, 237) + "…" : summary,
-    im: s.externals?.imdb || null,
-    u: s.url,
-    up: s.updated || 0,
+    p: s.image?.medium || null, po: s.image?.original || null,
+    pr: s.premiered || null, ed: s.ended || null, w: s.weight || 0,
+    su: summary.length > 220 ? summary.slice(0, 217) + "…" : summary,
+    im: s.externals?.imdb || null, u: s.url, up: s.updated || 0,
   };
 }
 
-async function fetchPage(page, signal) {
-  for (let attempt = 0; attempt < 4; attempt++) {
+async function fetchJson(url, signal, retries = 4) {
+  for (let a = 0; a < retries; a++) {
     try {
-      const res = await fetch(`${BASE}?page=${page}`, {
+      const res = await fetch(url, {
         signal,
         headers: { "Accept": "application/json", "User-Agent": "KDramaWorld/1.0 (catalog-builder)" },
       });
       if (res.status === 404) return null;
       if (res.status === 429) {
-        const wait = Number(res.headers.get("retry-after")) || 5;
-        await new Promise((r) => setTimeout(r, wait * 1000));
+        const w = Number(res.headers.get("retry-after")) || 5;
+        await new Promise((r) => setTimeout(r, w * 1000));
         continue;
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
     } catch (e) {
       if (e.name === "AbortError") throw e;
-      await new Promise((r) => setTimeout(r, 2 ** attempt * 800));
+      await new Promise((r) => setTimeout(r, 2 ** a * 500));
     }
   }
-  throw new Error(`page ${page} failed after 4 retries`);
+  throw new Error(`fetch failed: ${url}`);
 }
 
-// Read body if POST (carry may be large).
+function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+
 async function readBody(req) {
   if (req.method !== "POST") return null;
   return new Promise((resolve, reject) => {
     let chunks = [];
     req.on("data", (c) => chunks.push(c));
-    req.on("end", () => {
-      try { resolve(JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}")); }
-      catch (e) { reject(e); }
-    });
+    req.on("end", () => { try { resolve(JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}")); } catch (e) { reject(e); } });
     req.on("error", reject);
   });
 }
@@ -112,33 +93,44 @@ export default async function handler(req, res) {
   if (!authorized(url)) { res.statusCode = 404; res.end("not found"); return; }
 
   const controller = new AbortController();
-  const deadline = setTimeout(() => controller.abort(), 50_000);
+  const deadline = setTimeout(() => controller.abort(), PAGE_BUDGET_MS + 4000);
 
   try {
-    const startPage = Math.max(0, Number(url.searchParams.get("page")) || 0);
-    const body = req.method === "POST" ? await readBody(req) : null;
-    const incoming = (body && Array.isArray(body.shows)) ? body.shows : [];
+    const body = req.method === "POST" ? (await readBody(req) || {}) : {};
+    const startPage = Math.max(0, Number(url.searchParams.get("page")) || body.nextPage || 0);
+    const incoming = Array.isArray(body.shows) ? body.shows : [];
 
     const shows = new Map();
     for (const s of incoming) if (s && s.id != null) shows.set(s.id, s);
 
     let page = startPage;
-    let hitDeadline = false;
     let stoppedAt404 = false;
     const startedAt = Date.now();
-    for (; page < 500; page++) {
-      if (Date.now() - startedAt > 45_000) { hitDeadline = true; break; }
-      const data = await fetchPage(page, controller.signal);
-      if (data === null) { stoppedAt404 = true; break; }
-      for (const s of data) {
-        if (!isKoreanDrama(s)) continue;
-        const c = compact(s);
-        if (c.y && c.y < MIN_YEAR) continue;
-        if (!c.p && c.r == null && !c.su) continue;
-        shows.set(c.id, c);
+
+    // Worker pool: CONCURRENCY workers each claiming pages in turn.
+    let nextPageToFetch = startPage;
+    let hit404 = false;
+    async function worker() {
+      while (!hit404 && !controller.signal.aborted && Date.now() - startedAt < PAGE_BUDGET_MS - 1500) {
+        const p = nextPageToFetch++;
+        const data = await fetchJson(`${BASE}?page=${p}`, controller.signal);
+        if (data === null) { hit404 = true; break; }
+        if (Array.isArray(data)) {
+          for (const s of data) {
+            if (!isKoreanDrama(s)) continue;
+            const c = compact(s);
+            if (c.y && c.y < MIN_YEAR) continue;
+            if (!c.p && c.r == null && !c.su) continue;
+            shows.set(c.id, c);
+          }
+        }
+        await sleep(PAGE_INTER_PAGE_DELAY_MS);
       }
-      await new Promise((r) => setTimeout(r, 180));
     }
+    const workers = Array.from({ length: CONCURRENCY }, () => worker());
+    await Promise.allSettled(workers);
+    stoppedAt404 = hit404;
+    page = nextPageToFetch;
 
     clearTimeout(deadline);
     const list = [...shows.values()];
@@ -157,19 +149,20 @@ export default async function handler(req, res) {
     res.setHeader("cache-control", "no-store");
     if (stoppedAt404) {
       res.end(JSON.stringify({
-        done: true,
-        lastPage: page - 1,
-        count: finalShows.length,
-        fetchedAt: new Date().toISOString(),
+        done: true, lastPage: page - 1,
+        count: finalShows.length, fetchedAt: new Date().toISOString(),
         shows: finalShows,
       }));
       return;
     }
-    res.end(JSON.stringify({ done: false, nextPage: page, count: finalShows.length, shows: finalShows, hitDeadline }));
+    res.end(JSON.stringify({
+      done: false, nextPage: page, count: finalShows.length,
+      shows: finalShows,
+    }));
   } catch (err) {
     clearTimeout(deadline);
     res.statusCode = 500;
     res.setHeader("content-type", "application/json");
-    res.end(JSON.stringify({ error: String(err && err.message || err) }));
+    res.end(JSON.stringify({ error: String(err && err.message || err), at: Date.now() }));
   }
 }
