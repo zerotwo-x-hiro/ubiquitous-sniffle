@@ -196,7 +196,12 @@ export async function fetchDramaByTitle(seed: Drama, options?: { episodes?: bool
   // /shows/:id. For /singlesearch and /search, images ARE included when present.
   const urls: string[] = [];
   if (typeof seed.tvmazeId === "number" && seed.tvmazeId > 0) {
-    urls.push(`${BASE}/shows/${seed.tvmazeId}${episodes ? "?embed=episodes" : ""}`);
+    // Always embed episodes when requested; always add ?embed=episodes OR
+    // plain; we also append nothing here — TVMaze always returns show.image
+    // on the /shows/:id endpoint, but we will also explicitly re-hydrate via
+    // hydratePosterIfMissing if poster is missing.
+    const qs = episodes ? "?embed=episodes" : "";
+    urls.push(`${BASE}/shows/${seed.tvmazeId}${qs}`);
   }
   // Always ask /singlesearch with no embed first (faster); then /search for the
   // list; finally /shows/:id lookup by the ID we discover, as a hydrate step.
@@ -218,8 +223,14 @@ export async function fetchDramaByTitle(seed: Drama, options?: { episodes?: bool
 
   function consider(show: TvMazeShow) {
     if (!show?.id) return;
-    if (!isKoreanDrama(show, seed)) return;
-    if (!yearMatches(show, seed.year)) return;
+    // If this show was reached via an explicit seed.tvmazeId match, trust it
+    // directly (we seeded that ID intentionally to bypass fuzzy matching for
+    // canonical titles like Guardian: The Lonely and Great God / "Goblin").
+    const trusted = typeof seed.tvmazeId === "number" && seed.tvmazeId > 0 && show.id === seed.tvmazeId;
+    if (!trusted) {
+      if (!isKoreanDrama(show, seed)) return;
+      if (!yearMatches(show, seed.year)) return;
+    }
     const merged = mergeShow(seed, show, episodes);
     const cur = best as EnrichedDrama | null;
     if (!cur || scoreCandidate(merged) > scoreCandidate(cur)) best = merged;
