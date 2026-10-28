@@ -38,7 +38,8 @@ export type Drama = {
   _fromCatalog?: boolean;
 };
 
-export type ShelfDef = { id: string; title: string; eyebrow?: string; slugList: string[]; live?: boolean };
+export type ShelfKind = "default" | "ranked";
+export type ShelfDef = { id: string; title: string; eyebrow?: string; slugList: string[]; live?: boolean; kind?: ShelfKind };
 
 const arts = ["art-a","art-b","art-c","art-d","art-e","art-f","art-g","art-h"] as const;
 const A = (i: number) => arts[i % arts.length];
@@ -204,17 +205,19 @@ export function collectionItems(c: Collection): Drama[] {
 }
 
 export const SHELF_DEFS: ShelfDef[] = [
-  { id: "discover", title: "Discover Your Next Favorite", eyebrow: "Curated",       slugList: DISCOVER_SLUGS },
-  { id: "recent",   title: "Recently Aired",              eyebrow: "TVMaze",        slugList: RECENT_FALLBACK_SLUGS, live: true },
-  { id: "romance",  title: "A Little Romance",            eyebrow: "Romance",       slugList: ROMANCE_SLUGS },
-  { id: "thriller", title: "One More Episode",            eyebrow: "Thriller",      slugList: THRILLER_SLUGS },
-  { id: "fantasy",  title: "Beyond the Ordinary",         eyebrow: "Sci-Fi & Fantasy", slugList: FANTASY_SLUGS },
+  { id: "trending", title: "Trending This Week",           eyebrow: "Top 10",        slugList: DISCOVER_SLUGS, kind: "ranked" },
+  { id: "recent",   title: "Fresh on Air",                 eyebrow: "New This Week", slugList: RECENT_FALLBACK_SLUGS, live: true },
+  { id: "romance",  title: "Romance Favorites",            eyebrow: "Romance",       slugList: ROMANCE_SLUGS },
+  { id: "thriller", title: "Edge-of-Your-Seat Thrillers",  eyebrow: "Thriller",      slugList: THRILLER_SLUGS },
+  { id: "fantasy",  title: "Fantasy & Beyond",             eyebrow: "Sci-Fi & Fantasy", slugList: FANTASY_SLUGS },
 ];
 
 export const shelves = SHELF_DEFS.map(s => ({
   id: s.id, title: s.title, eyebrow: s.eyebrow,
   items: s.live ? recentFallback : bySlugs(s.slugList),
 }));
+
+export const DISCOVER_SHELF_ID = "trending";
 
 export type Minifeature = { slug: string; eyebrow: string; title: string; blurb: string; cta: string; accent: string; note?: string };
 export const minifeatures: Minifeature[] = [

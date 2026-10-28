@@ -14,7 +14,7 @@ export type AnyDrama = Drama | EnrichedDrama;
 
 type DataState = {
   featured: AnyDrama;
-  shelves: Array<{ id: string; title: string; eyebrow?: string; items: AnyDrama[]; live?: boolean }>;
+  shelves: Array<{ id: string; title: string; eyebrow?: string; items: AnyDrama[]; live?: boolean; ranked?: boolean }>;
   topRated: AnyDrama[];
   collections: Array<Collection & { resolvedItems: AnyDrama[]; avgRating: number | null }>;
   comingSoon: AnyDrama[];
@@ -116,12 +116,13 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
       title: s.title,
       eyebrow: s.eyebrow,
       live: !!s.live,
+      ranked: s.kind === "ranked",
       items: s.live ? liveShelfItems : shelfItems(s.slugList),
     }));
 
     const collectionResolve = (c: Collection): AnyDrama[] => collectionItems(c).map(enrich);
 
-    const discoverShelf = shelves.find(s => s.id === "discover")!.items;
+    const discoverShelf = (shelves.find(s => s.id === "trending") ?? shelves.find(s => s.id === "discover"))!.items;
     const allShelved = [enrich(seedFeatured), ...shelves.flatMap(s => s.items)];
 
     const topRated = [...new Map(allShelved.map(d => [d.slug, d])).values()]

@@ -1,38 +1,31 @@
 import { useLiveData } from "@/LiveData";
-import Poster from "./Poster";
+import DramaCard from "./DramaCard";
+import { Link } from "react-router-dom";
 
 export default function RecentlyAdded() {
   const { recentlyAdded, liveCount } = useLiveData();
   return (
-    <section className="relative z-10 px-4 md:px-8 lg:px-12 py-8 md:py-12">
-      <div className="flex items-end justify-between mb-6">
+    <section className="relative z-10 px-[4%] py-8 md:py-10">
+      <div className="flex items-end justify-between mb-5">
         <div>
           <div className="text-[11px] uppercase tracking-[0.22em] font-semibold mb-2" style={{color:"var(--text-dim)"}}>
             Live data · {liveCount} titles enriched
           </div>
-          <h2 className="section-title text-2xl md:text-3xl">Fresh in the archive</h2>
-          <p className="mt-2 max-w-xl text-sm" style={{color:"var(--text-muted)"}}>
-            Posters, ratings, episode counts and metadata are fetched live from the TVMaze API on every load.
-          </p>
+          <h2 className="section-title text-[22px] md:text-[28px] flex items-center gap-3" style={{ color: "var(--text)" }}>
+            Fresh on Air
+            <span aria-hidden className="hidden sm:inline-block h-[3px] w-12 rounded-full"
+                  style={{ background: "var(--accent)", marginTop: 4 }} />
+          </h2>
         </div>
-        <a href="/explore" className="hidden sm:inline-flex items-center gap-1 text-sm font-semibold" style={{color:"var(--text-muted)"}}>
-          Browse all
+        <Link to="/explore?sort=newest" className="hidden sm:inline-flex items-center gap-1 text-[13px] md:text-[14px] font-semibold"
+              style={{ color: "var(--accent)" }}>
+          View All
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-        </a>
+        </Link>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
         {recentlyAdded.map((d) => (
-          <a key={d.slug} href={`/drama/${d.slug}`} className="card-hover group block">
-            <div className="aspect-[2/3] rounded-xl overflow-hidden relative">
-              <Poster drama={d} showTitle={false} className="!h-full !rounded-none" />
-            </div>
-            <div className="mt-2 px-0.5">
-              <div className="text-[13px] font-semibold leading-tight line-clamp-2 group-hover:text-white" style={{color:"var(--text)"}}>{d.title}</div>
-              <div className="text-[11px] uppercase tracking-widest mt-0.5" style={{color:"var(--text-dim)"}}>
-                {d.network ? <>{d.network} · </> : null}{d.year}
-              </div>
-            </div>
-          </a>
+          <DramaCard key={d.slug} drama={d} />
         ))}
       </div>
     </section>

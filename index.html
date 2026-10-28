@@ -1,10 +1,24 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0b0614" />
+    <meta name="theme-color" content="#0a0a0c" />
+    <script>
+      // FOUC-avoidance: apply theme class + theme-color before paint.
+      (function () {
+        try {
+          var stored = localStorage.getItem("kdramaworld-theme");
+          var dark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var root = document.documentElement;
+          root.classList.remove("light","dark");
+          root.classList.add(dark ? "dark" : "light");
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.content = dark ? "#0a0a0c" : "#fdfaf2";
+        } catch (e) {}
+      })();
+    </script>
     <meta name="description" content="KDramaWorld — A cinematic Korean drama discovery experience. Catalogues, ratings, posters and editorial picks, sourced live." />
     <meta property="og:site_name" content="KDramaWorld" />
     <meta property="og:type" content="website" />

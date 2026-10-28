@@ -1,139 +1,209 @@
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import Poster from "./Poster";
 import { useLiveData } from "@/LiveData";
 import { deriveStatus, statusLabel } from "@/lib/status";
+import type { AnyDrama } from "@/LiveData";
 
+/**
+ * Netflix-style hero carousel:
+ *   - Full viewport-width cinematic banner with a real-poster/backdrop image.
+ *   - Left-aligned metadata: kicker genre tags, huge serif title, meta row,
+ *     synopsis, "Watch Now" + "Add to Watchlist" action buttons.
+ *   - Round arrow buttons left/right + pagination dots at bottom.
+ *   - Carousel autoplays every 7s, pauses on hover/arrow interaction.
+ *
+ * Rotates through a small editorial list of hero-worthy dramas (featured +
+ * curated top-rated).
+ */
 export default function Hero() {
-  const { featured } = useLiveData();
-  const backdrop = (featured as any).backdrop as string | undefined;
-  const tvStatus = (featured as any).status;
-  const runtime = (featured as any).runtime as number | undefined;
-  const nextAir = (featured as any).nextAirDate as string | undefined;
+  const { featured, shelves, recentlyAdded } = useLiveData();
+  const discover = shelves.find((s) => s.id === "trending" || s.id === "discover")?.items ?? [];
+
+  // Build a rotating hero list: featured first, then a handful of high-rated
+  // titles (deduplicated).
+  const slides: AnyDrama[] = useMemo(() => {
+    const seen = new Set<string>([featured.slug]);
+    const list: AnyDrama[] = [featured];
+    const pool: AnyDrama[] = [];
+    // Prefer posters/backdrops for a cinematic background.
+    const candidates = [...discover, ...recentlyAdded];
+    for (const d of candidates) {
+      if (seen.has(d.slug)) continue;
+      if ((d as any).poster || (d as any).backdrop) {
+        pool.push(d);
+        seen.add(d.slug);
+      }
+      if (pool.length >= 5) break;
+    }
+    return [...list, ...pool];
+  }, [featured, discover, recentlyAdded]);
+
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    if (slides.length < 2) return;
+    const t = setInterval(() => setIndex((i) => (i + 1) % slides.length), 7000);
+    return () => clearInterval(t);
+  }, [slides.length]);
+
+  const drama = slides[index];
+  if (!drama) return null;
+
+  const backdrop = (drama as any).backdrop as string | undefined;
+  const poster = (drama as any).poster as string | undefined;
+  const bg = backdrop || poster;
+  const tvStatus = (drama as any).status;
+  const runtime = (drama as any).runtime as number | undefined;
   const status = deriveStatus({
     status: tvStatus,
-    premiered: `${featured.year}-01-01`,
-    ended: tvStatus === "Ended" && featured.year ? `${featured.year}-12-31` : undefined,
-    nextAirDate: nextAir,
+    premiered: `${drama.year}-01-01`,
+    ended: tvStatus === "Ended" && drama.year ? `${drama.year}-12-31` : undefined,
   });
+  const go = (delta: number) =>
+    setIndex((i) => (i + delta + slides.length) % slides.length);
+
+  const genreTags = drama.genres.slice(0, 4);
 
   return (
-    <section className="relative z-10 px-4 md:px-8 lg:px-12 pt-8 md:pt-14 pb-4">
-      <div className="relative glass-strong rounded-3xl overflow-hidden hanji">
-        {/* Backdrop */}
-        <div className={`absolute inset-0 ${featured.art}`} aria-hidden />
-        {backdrop && (
-          <img src={backdrop} alt="" aria-hidden
-               className="absolute inset-0 w-full h-full object-cover opacity-60" />
-        )}
-        <div className="absolute inset-0"
-             style={{ background: "linear-gradient(120deg, rgba(11,6,20,.88) 10%, rgba(11,6,20,.55) 50%, rgba(11,6,20,.25) 100%)" }} />
-        {/* Hanja watermark in the corner */}
-        <span className="hanja-mark" style={{ top: "-2.5rem", right: "-1rem", transform: "rotate(6deg)" }} aria-hidden>韓</span>
-        <div className="absolute -top-16 -right-10 w-[480px] h-[480px] rounded-full aurora"
-             style={{ background: "radial-gradient(circle, rgba(255,94,168,.5), transparent 60%)" }} aria-hidden />
-        <div className="absolute -bottom-20 -left-20 w-[520px] h-[520px] rounded-full aurora"
-             style={{ background: "radial-gradient(circle, rgba(74,168,255,.45), transparent 60%)", animationDelay: "-6s" }} aria-hidden />
-        {/* Vertical Korean accent on the right */}
-        <div className="hidden lg:flex absolute right-6 top-10 items-center gap-4">
-          <div className="h-32 w-px" style={{background:"linear-gradient(180deg,transparent,var(--border-strong),transparent)"}} />
-          <span className="vertical-ko floaty">오늘의 드라마</span>
+    <section className="relative w-full" style={{ marginTop: -76 }}>
+      {/* Cinematic backdrop */}
+      <div className="relative w-full" style={{ aspectRatio: "16/7", minHeight: 520, maxHeight: "82vh" }}>
+        {/* Image */}
+        <div className={`absolute inset-0 ${bg ? "" : drama.art}`} aria-hidden>
+          {bg && (
+            <img
+              src={bg}
+              alt=""
+              aria-hidden
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ objectPosition: "center 20%" }}
+            />
+          )}
+        </div>
+        {/* Top fade (for the nav) */}
+        <div className="absolute inset-0" style={{ background: "var(--hero-top)" }} />
+        {/* Left-to-right dark fade for the text */}
+        <div className="absolute inset-0" style={{ background: "var(--hero-side)" }} />
+        {/* Bottom fade to blend into next section */}
+        <div className="absolute inset-0" style={{ background: "var(--hero-fade)" }} />
+
+        {/* Light mode hand-script accent in top right (matches the ref "Small Town…") */}
+        <div className="hidden lg:block absolute top-[18%] right-[8%]">
+          <span className="hand-script text-[28px] md:text-[34px]">
+            {"Small\nTown\nBig\nHappiness"}
+          </span>
         </div>
 
-        <div className="relative rise grid md:grid-cols-[1.2fr_0.8fr] gap-8 md:gap-12 p-6 md:p-10 lg:p-14 items-center">
-          <div>
-            <span className="kicker-ko">
-              <span className="han">推</span>
-              <span>{featured.tagline ?? "Top Pick · Featured K-Drama"}</span>
-            </span>
-            <h1 className="section-title mt-5 text-4xl md:text-6xl lg:text-7xl leading-[0.95]" style={{ color:"#fff" }}>
-              {featured.title.split(" ").map((w,i)=>(
-                <span key={i} className={i === 1 ? "gradient-text italic" : ""}>
-                  {w}{i < featured.title.split(" ").length-1 ? " " : ""}
+        {/* Content */}
+        <div className="absolute inset-0 flex items-end">
+          <div className="relative rise px-[4%] pb-[8%] md:pb-[7%] w-full">
+            {/* Genre / eyebrow row */}
+            <div className="flex items-center gap-3 text-[11px] md:text-[12px] uppercase tracking-[0.28em] font-semibold"
+                 style={{ color: "var(--text-muted)" }}>
+              {genreTags.map((g: string, i: number) => (
+                <span key={g} className="flex items-center gap-3">
+                  {i > 0 && <span className="meta-divider" />}
+                  <span>{g}</span>
                 </span>
               ))}
+            </div>
+
+            {/* Title */}
+            <h1
+              className="mt-3 md:mt-4 text-[40px] sm:text-[56px] md:text-[72px] lg:text-[96px] font-black leading-[0.92] tracking-tight max-w-[14ch]"
+              style={{
+                color: "var(--text)",
+                fontFamily: "var(--font-sans)",
+                textShadow: "0 4px 24px rgba(0,0,0,0.55)",
+              }}
+            >
+              {drama.title}
             </h1>
-            <div className="mt-4 flex items-center flex-wrap gap-3 text-sm text-white/80">
-              <span className="rating-pill px-2.5 py-1 rounded-full text-white flex items-center gap-1.5 font-semibold">
-                {featured.rating > 0 ? (
-                  <>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffc464"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.43 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
-                    {featured.rating.toFixed(1)} <span className="text-white/60 text-[11px] ml-1 font-normal">on TVMaze</span>
-                  </>
-                ) : (
-                  <span className="text-pink-200/90 uppercase tracking-widest text-[10px]">Not rated yet</span>
-                )}
-              </span>
-              <span className="opacity-80">·</span>
-              <span>{featured.year}</span>
-              {featured.episodes && (<><span className="opacity-80">·</span><span>{featured.episodes} Episodes</span></>)}
-              {runtime && (<><span className="opacity-80">·</span><span>{runtime} min/ep</span></>)}
-              {featured.network && (<><span className="opacity-80">·</span><span>{featured.network}</span></>)}
-              {featured.genres.length > 0 && (
+
+            {/* Meta row */}
+            <div
+              className="mt-3 md:mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[14px] md:text-[16px]"
+              style={{ color: "var(--text)" }}
+            >
+              {drama.year && <span className="font-semibold">{drama.year}</span>}
+              {drama.episodes && (
                 <>
-                  <span className="opacity-80">·</span>
-                  <span className="flex gap-1.5">
-                    {featured.genres.slice(0,3).map((g)=>(
-                      <span key={g} className="pill rounded-full px-2 py-0.5 text-xs">{g}</span>
-                    ))}
-                  </span>
+                  <span className="meta-divider" />
+                  <span>{drama.episodes} Episodes</span>
                 </>
               )}
+              {drama.genres.slice(0, 2).map((g) => (
+                <span key={g}>
+                  <span className="meta-divider" />
+                  <span>{g}</span>
+                </span>
+              ))}
+              <span className="meta-divider" />
+              <span className="inline-flex items-center gap-1 font-semibold" style={{ color: "var(--gold)" }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.43 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" />
+                </svg>
+                {drama.rating > 0 ? drama.rating.toFixed(1) : "—"}
+                <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: 12, marginLeft: 2 }}>/10</span>
+              </span>
             </div>
-            <p className="mt-5 max-w-xl text-base md:text-lg text-white/85 leading-relaxed">
-              {featured.blurb}
-            </p>
-            <p className="mt-3 font-hangul text-base md:text-lg text-white/65 leading-relaxed">
-              오늘 밤, 당신의 다음 드라마를 만나보세요.
-            </p>
-            <div className="taegeuk-divider mt-6 max-w-xs">
-              <span className="taegeuk" aria-hidden />
-              <span>EST · {new Date().getFullYear()}</span>
-            </div>
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <Link to={`/drama/${featured.slug}`} className="btn-primary h-11 px-6 rounded-xl inline-flex items-center gap-2 font-semibold">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                Explore
-              </Link>
-              <Link to={`/drama/${featured.slug}`} className="btn-ghost h-11 px-6 rounded-xl inline-flex items-center gap-2 font-semibold">
-                More info
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-              </Link>
-              <div className="text-xs text-white/70 ml-2">
-                <b className="text-white">{statusLabel(status)}</b> · Data from TVMaze
-              </div>
-            </div>
-          </div>
 
-          <div className="relative hidden md:block">
-            <div className="floaty relative mx-auto w-[280px] lg:w-[320px]">
-              <div className="absolute inset-0 rounded-3xl blur-3xl opacity-60"
-                   style={{ background: "linear-gradient(135deg,#ff5ea8,#9b5cff,#4aa8ff)" }} />
-              <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/10">
-                <Poster drama={featured} size="lg" showTitle={false} className="!rounded-none" />
-                <div className="absolute inset-x-0 bottom-0 p-5 z-10"
-                     style={{ background: "linear-gradient(180deg, transparent, rgba(0,0,0,.8))" }}>
-                  <div className="text-white font-display italic text-2xl leading-tight">
-                    {featured.title}
-                  </div>
-                  <div className="text-white/70 text-xs uppercase tracking-widest mt-1">
-                    {featured.network ?? "tvN"} · {featured.year}
-                  </div>
-                  <div className="mt-3 flex items-center justify-between text-[11px] text-white/80">
-                    <span>{statusLabel(status)}</span>
-                    <span className="flex items-center gap-1">
-                      <span className="text-amber-300">★</span>
-                      {featured.rating > 0 ? featured.rating.toFixed(1) : "—"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="glass-strong absolute -left-6 -bottom-6 rounded-2xl px-3 py-2.5 floaty shadow-xl" style={{ animationDelay: "-2s" }}>
-                <div className="text-[10px] uppercase tracking-widest text-white/70">Live data</div>
-                <div className="text-white text-sm font-semibold">via TVMaze API</div>
-              </div>
+            {/* Synopsis */}
+            <p
+              className="mt-3 md:mt-4 max-w-[55ch] text-[14px] md:text-[18px] leading-[1.4]"
+              style={{ color: "var(--text)", textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}
+            >
+              {drama.blurb?.length > 220 ? drama.blurb.slice(0, 217) + "…" : drama.blurb}
+            </p>
+
+            {/* Buttons */}
+            <div className="mt-5 md:mt-6 flex items-center gap-3">
+              <Link
+                to={`/drama/${drama.slug}`}
+                className="h-11 md:h-12 px-5 md:px-7 rounded-md inline-flex items-center gap-2 font-bold text-[15px] md:text-[16px]"
+                style={{ background: "#ffffff", color: "#000" }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                Watch Now
+              </Link>
+              <Link
+                to={`/drama/${drama.slug}`}
+                className="h-11 md:h-12 px-5 md:px-7 rounded-md inline-flex items-center gap-2 font-semibold text-[15px] md:text-[16px] btn-ghost"
+                style={{ color: "#fff" }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add to Watchlist
+              </Link>
+              <span
+                className="ml-2 hidden md:inline-flex text-[12px] uppercase tracking-widest"
+                style={{ color: "var(--text-muted)" }}
+              >
+                {statusLabel(status)} · {runtime ? `${runtime}m/ep · ` : ""}{drama.network || "TVMaze"}
+              </span>
             </div>
           </div>
         </div>
+
+        {/* Left / right arrows */}
+        <button aria-label="Previous" onClick={() => go(-1)} className="hero-arrow absolute left-2 md:left-4 top-1/2 -translate-y-1/2">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button aria-label="Next" onClick={() => go(1)} className="hero-arrow absolute right-2 md:right-4 top-1/2 -translate-y-1/2">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+
+        {/* Dots */}
+        {slides.length > 1 && (
+          <div className="absolute bottom-6 md:bottom-8 left-[4%] flex items-center gap-2">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                aria-label={`Go to slide ${i + 1}`}
+                onClick={() => setIndex(i)}
+                className={`hero-dot ${i === index ? "active" : ""}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

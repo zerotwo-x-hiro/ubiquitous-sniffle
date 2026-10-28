@@ -1,53 +1,108 @@
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { useTheme } from "@/theme";
 
-const links = [
-  { to: "/", label: "Home" },
-  { to: "/explore", label: "Explore" },
+const LINKS = [
+  { to: "/", label: "Home", end: true },
+  { to: "/explore?type=movies", label: "Movies" },
+  { to: "/explore?type=tv", label: "TV Shows" },
   { to: "/genres", label: "Genres" },
-  { to: "/lists", label: "Lists" },
-  { to: "/actors", label: "Actors" },
+  { to: "/explore?sort=top-rated", label: "Top Rated" },
+  { to: "/explore?sort=newest", label: "Upcoming" },
 ];
 
 export default function Nav() {
-  const { theme, toggle } = useTheme();
+  const { theme, toggleTheme } = useTheme();
+  const { search } = useLocation();
   return (
-    <header className="sticky top-0 z-40 px-4 md:px-8 lg:px-12 pt-3 md:pt-4">
-      <div className="glass-strong rounded-2xl px-4 md:px-6 h-14 md:h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-3">
-          <span className="dojang" title="KDramaWorld" aria-hidden>韓</span>
-          <span className="leading-none">
-            <span className="font-display text-lg md:text-xl font-black tracking-tight block">
-              KDrama<span className="gradient-text">World</span>
-            </span>
-            <span className="font-hangul text-[10px] block mt-0.5 tracking-widest" style={{color:"var(--text-dim)"}}>
-              한국 드라마 · 影像世界
-            </span>
+    <header
+      className="sticky top-0 z-50 w-full transition-colors duration-300"
+      style={{ background: "var(--nav-gradient)" }}
+    >
+      <div className="flex items-center gap-6 px-[4%] py-4">
+        {/* Logo */}
+        <Link to="/" className="flex items-center leading-none shrink-0" aria-label="KDramaWorld home">
+          <span className="text-[26px] md:text-[30px] font-black tracking-tight" style={{ color: "var(--logo-primary)" }}>
+            KDrama
+          </span>
+          <span className="text-[26px] md:text-[30px] font-black tracking-tight" style={{ color: "var(--logo-accent)" }}>
+            World
           </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-7 text-sm font-medium">
-          {links.map((l) => (
-            <NavLink key={l.to} to={l.to} end={l.to === "/"} className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
+        {/* Nav */}
+        <nav className="hidden md:flex items-center gap-6 text-[14px]">
+          {LINKS.map((l) => (
+            <NavLink
+              key={l.to}
+              to={{ pathname: l.to.split("?")[0], search: l.to.includes("?") ? "?" + l.to.split("?")[1] : undefined }}
+              end={l.end}
+              className={({ isActive }) =>
+                `nav-link ${isActive && search === (l.to.includes("?") ? "?" + l.to.split("?")[1] : "") ? "active" : ""}`
+              }
+            >
               {l.label}
             </NavLink>
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
-          <Link to="/explore" className="btn-ghost hidden sm:inline-flex h-9 px-3 rounded-xl items-center gap-2 text-sm font-medium" aria-label="Search">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-            <span className="hidden lg:inline">Browse dramas</span>
+        <div className="flex-1" />
+
+        {/* Right side */}
+        <div className="flex items-center gap-4">
+          <Link
+            to="/explore"
+            aria-label="Search"
+            className="group flex items-center gap-2 rounded-full px-3 h-10 transition-colors"
+            style={{
+              border: "1px solid rgba(255,255,255,0.0)",
+              background: "transparent",
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--nav-icon)" }}>
+              <circle cx="11" cy="11" r="7" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            <span className="hidden lg:inline text-[13px]" style={{ color: "var(--nav-icon)", opacity: 0.85 }}>
+              Search Korean dramas, movies…
+            </span>
           </Link>
-          <button onClick={toggle} aria-label={theme === "dark" ? "Switch to light" : "Switch to dark"}
-                  className="btn-ghost h-9 w-9 grid place-items-center rounded-xl"
-                  title={theme === "dark" ? "Switch to light" : "Switch to dark"}>
-            {theme === "dark" ? (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-            ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-            )}
+
+          <button aria-label="Notifications" className="grid place-items-center" style={{ color: "var(--nav-icon)" }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+              <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+            </svg>
           </button>
+
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            aria-label={theme === "dark" ? "Switch to light" : "Switch to dark"}
+            className="grid place-items-center rounded-full overflow-hidden border border-white/20"
+            style={{ width: 34, height: 34 }}
+            title={theme === "dark" ? "Switch to light" : "Switch to dark"}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill={theme === "dark" ? "#f5c518" : "#ff9f1c"}>
+              {theme === "dark" ? (
+                <circle cx="12" cy="12" r="5" />
+              ) : (
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              )}
+            </svg>
+          </button>
+
+          {/* User avatar */}
+          <div
+            className="rounded-sm overflow-hidden shrink-0"
+            style={{
+              width: 34, height: 34,
+              background: "linear-gradient(135deg, var(--accent), var(--accent-2))",
+              display: "grid", placeItems: "center", color: "#fff", fontSize: 13, fontWeight: 800,
+            }}
+            aria-hidden
+          >
+            K
+          </div>
         </div>
       </div>
     </header>

@@ -35,7 +35,7 @@ export default function ExplorePage() {
     return () => { cancelled = true; };
   }, []);
 
-  const discoverShelf = shelves.find((s) => s.id === "discover");
+  const discoverShelf = shelves.find((s) => s.id === "trending" || s.id === "discover");
   const recentShelf = shelves.find((s) => s.live);
 
   // Union all curated shelf items + recentlyAdded + loaded catalog entries (deduped by slug).
@@ -111,28 +111,28 @@ export default function ExplorePage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by title or network…"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 h-11 text-sm outline-none focus:border-white/30"
-              style={{ color: "var(--text)" }}
+              className="w-full rounded-xl px-4 h-11 text-sm outline-none"
+              style={{ background: "var(--bg-elev)", border: "1px solid var(--border-strong)", color: "var(--text)" }}
             />
           </div>
           <div className="flex gap-2 flex-wrap">
             <select value={genreFilter} onChange={(e) => setGenreFilter(e.target.value)}
-                    className="bg-white/5 border border-white/10 rounded-xl h-11 px-3 text-sm outline-none"
-                    style={{ color: "var(--text)" }}>
+                    className="rounded-xl h-11 px-3 text-sm outline-none"
+                    style={{ background: "var(--bg-elev)", border: "1px solid var(--border-strong)", color: "var(--text)" }}>
               {genres.map((g) => (
-                <option key={g} value={g} style={{ background: "#160b2a" }}>
+                <option key={g} value={g}>
                   {g === "all" ? "All genres" : g}
                 </option>
               ))}
             </select>
             <select value={sort} onChange={(e) => setSort(e.target.value as Sort)}
-                    className="bg-white/5 border border-white/10 rounded-xl h-11 px-3 text-sm outline-none"
-                    style={{ color: "var(--text)" }}>
-              <option value="popular" style={{ background: "#160b2a" }}>Popular</option>
-              <option value="top-rated" style={{ background: "#160b2a" }}>Top rated (≥5★)</option>
-              <option value="newest" style={{ background: "#160b2a" }}>Newest</option>
-              <option value="oldest" style={{ background: "#160b2a" }}>Oldest</option>
-              <option value="title" style={{ background: "#160b2a" }}>Title A–Z</option>
+                    className="rounded-xl h-11 px-3 text-sm outline-none"
+                    style={{ background: "var(--bg-elev)", border: "1px solid var(--border-strong)", color: "var(--text)" }}>
+              <option value="popular">Popular</option>
+              <option value="top-rated">Top rated (≥5★)</option>
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="title">Title A–Z</option>
             </select>
           </div>
         </div>
