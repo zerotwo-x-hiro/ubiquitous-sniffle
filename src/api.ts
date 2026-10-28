@@ -191,10 +191,15 @@ export async function fetchDramaByTitle(seed: Drama, options?: { episodes?: bool
   // a stripped record (no image) for some popular shows, so we always consider
   // the /search list and pick the best-validated candidate; we also run a
   // follow-up /shows/:id hydrate if the winning match lacks a poster.
+  // Specify `specials=1&embed=episodes` isn't needed for images — but we add
+  // no `images` embed; we rely on the show.image field that TVMaze returns on
+  // /shows/:id. For /singlesearch and /search, images ARE included when present.
   const urls: string[] = [];
   if (typeof seed.tvmazeId === "number" && seed.tvmazeId > 0) {
     urls.push(`${BASE}/shows/${seed.tvmazeId}${episodes ? "?embed=episodes" : ""}`);
   }
+  // Always ask /singlesearch with no embed first (faster); then /search for the
+  // list; finally /shows/:id lookup by the ID we discover, as a hydrate step.
   const singleParams = new URLSearchParams({ q: seed.title });
   if (episodes) singleParams.set("embed", "episodes");
   urls.push(`${BASE}/singlesearch/shows?${singleParams.toString()}`);
