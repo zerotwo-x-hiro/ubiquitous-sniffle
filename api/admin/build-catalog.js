@@ -148,6 +148,16 @@ export default async function handler(req, res) {
     res.setHeader("content-type", "application/json; charset=utf-8");
     res.setHeader("cache-control", "no-store");
     if (stoppedAt404) {
+      // Optional year filter so tooling can download incrementally without
+      // hitting response-size limits (handy when the agent can't read huge
+      // bodies in one go). ?year=2024 returns just that year's slice.
+      const yearParam = url.searchParams.get("year");
+      if (yearParam) {
+        const y = Number(yearParam);
+        const slice = finalShows.filter((s) => s.y === y);
+        res.end(JSON.stringify({ done: true, year: y, count: finalShows.length, sliceCount: slice.length, shows: slice }));
+        return;
+      }
       res.end(JSON.stringify({
         done: true, lastPage: page - 1,
         count: finalShows.length, fetchedAt: new Date().toISOString(),
@@ -160,9 +170,3 @@ export default async function handler(req, res) {
       shows: finalShows,
     }));
   } catch (err) {
-    clearTimeout(deadline);
-    res.statusCode = 500;
-    res.setHeader("content-type", "application/json");
-    res.end(JSON.stringify({ error: String(err && err.message || err), at: Date.now() }));
-  }
-}
