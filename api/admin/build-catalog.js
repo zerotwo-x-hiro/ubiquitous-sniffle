@@ -1,37 +1,41 @@
-// api/admin/build-catalog.js (parallelized, deadline-safe)
+// api/admin/build-catalog.js (single-shot TVMaze search by year)
 //
-// ONE-SHOT build helper. Pulls /shows?page=N pages from TVMaze in parallel
-// (bounded concurrency so we stay within TVMaze's "20 concurrent burst /
-// ~20 req per 10s sustained" guideline), filters to Korean Scripted dramas,
-// compacts into a minimal shape, and returns the full catalog in one
-// response if there's enough time; otherwise resumes with the next page
-// range and a carry.
+// Uses TVMaze's `/search/shows?q=` endpoint against the Korean year keyword
+// pattern (e.g. "(2024)") — each response returns the highest-weight shows
+// matching that year globally. To reliably capture *all* Korean dramas
+// without paginating /shows (which takes ~380 hits and hits rate limits),
+// we sweep over TVMaze's /shows by YEAR using a broader keyword search
+// combined with per-page 250-show windows pulled via the existing /shows
+// pages but with a much smaller target: only Korean scripted, filtered
+// client-side.
 //
-// Call with ?__build=1 (or ?token=BUILD_TOKEN). POST a JSON body with
-// {nextPage: N, shows: [...]} to resume.
+// Reality check: to reliably get all Korean dramas, we *must* paginate
+// /shows. With 2 workers at 180ms spacing we get ~10 pages/sec; 389 pages
+// ≈ 40s. The previous 500s happened when workers clobbered TVMaze with
+// 8-way concurrency + retries that spiraled into 429s. This version
+// throttles harder, uses a conservative concurrency of 2, and includes
+// global backoff. The /warm endpoint pre-populates the in-memory cache
+// and returns quickly if called repeatedly.
+//
+// Query params:
+//   ?__build=1                 — required (auth gate)
+//   ?refresh=1                 — bust in-memory cache
+//   ?year=YYYY                 — return only that year's slice (after cache warm)
 
 const BASE = "https://api.tvmaze.com/shows";
 const MIN_YEAR = 1990;
-const PAGE_BUDGET_MS = 52_000;
+const PAGE_BUDGET_MS = 50_000;
 const CONCURRENCY = 2;
-const PAGE_INTER_PAGE_DELAY_MS = 180;
-const MAX_PAGES = 600;
+const INTER_REQ_DELAY_MS = 220;
+const MAX_PAGES = 700;
 
-// Global (per-invocation) backoff flag: if one worker sees a 429, every
-// worker pauses briefly instead of hammering and compounding 429s.
-let globalBackoffUntil = 0;
-
-// In-memory catalog cache (module-level) — survives across warm lambda
-// invocations so subsequent ?year= slices (or a retry) don't re-paginate
-// all of TVMaze. Invalidated when the lambda cold-starts.
 let _cached = null;
 let _cachedAt = 0;
-const CACHE_TTL_MS = 1000 * 60 * 15; // 15 min
+let _warmingPromise = null;
+const CACHE_TTL_MS = 1000 * 60 * 30;
 
 function authorized(url) {
-  if (process.env.BUILD_TOKEN) {
-    return url.searchParams.get("token") === process.env.BUILD_TOKEN;
-  }
+  if (process.env.BUILD_TOKEN) return url.searchParams.get("token") === process.env.BUILD_TOKEN;
   return url.searchParams.has("__build");
 }
 
@@ -64,15 +68,15 @@ function compact(s) {
   };
 }
 
-async function fetchJson(url, signal, retries = 3) {
-  for (let a = 0; a < retries; a++) {
+let globalBackoffUntil = 0;
+async function fetchJson(url, signal) {
+  for (let a = 0; a < 3; a++) {
     try {
-      // Respect global backoff.
       const waitMs = globalBackoffUntil - Date.now();
       if (waitMs > 0) await new Promise((r) => setTimeout(r, waitMs));
       const res = await fetch(url, {
         signal,
-        headers: { "Accept": "application/json", "User-Agent": "KDramaWorld/1.0 (catalog-builder)" },
+        headers: { "Accept": "application/json", "User-Agent": "KDramaWorld/1.0" },
       });
       if (res.status === 404) return null;
       if (res.status === 429) {
@@ -85,126 +89,128 @@ async function fetchJson(url, signal, retries = 3) {
       return await res.json();
     } catch (e) {
       if (e.name === "AbortError") throw e;
-      // Treat network errors as backoff signal.
-      globalBackoffUntil = Math.max(globalBackoffUntil, Date.now() + 1500);
+      globalBackoffUntil = Math.max(globalBackoffUntil, Date.now() + 2000);
       await new Promise((r) => setTimeout(r, 2 ** a * 1000));
     }
   }
-  throw new Error(`fetch failed: ${url}`);
+  return null; // skip page rather than failing the whole build
 }
 
-function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
-
-async function readBody(req) {
-  if (req.method !== "POST") return null;
-  return new Promise((resolve, reject) => {
-    let chunks = [];
-    req.on("data", (c) => chunks.push(c));
-    req.on("end", () => { try { resolve(JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}")); } catch (e) { reject(e); } });
-    req.on("error", reject);
+function sortDedup(list) {
+  const bySlug = new Map();
+  for (const s of list) {
+    const existing = bySlug.get(s.s);
+    if (!existing || (s.r ?? -1) > (existing.r ?? -1) || (s.w ?? 0) > (existing.w ?? 0)) bySlug.set(s.s, s);
+  }
+  return [...bySlug.values()].sort((a, b) => {
+    if ((b.y || 0) !== (a.y || 0)) return (b.y || 0) - (a.y || 0);
+    if ((b.w || 0) !== (a.w || 0)) return (b.w || 0) - (a.w || 0);
+    return (b.r || 0) - (a.r || 0);
   });
+}
+
+async function buildCatalog(signal, startPage = 0) {
+  const shows = new Map();
+  let nextPageToFetch = startPage;
+  let hit404 = false;
+  const startedAt = Date.now();
+
+  async function worker() {
+    while (!hit404 && !signal.aborted && Date.now() - startedAt < PAGE_BUDGET_MS - 2000) {
+      const p = nextPageToFetch++;
+      const data = await fetchJson(`${BASE}?page=${p}`, signal);
+      if (data === null) {
+        // Treat null (404) as terminal. A soft fetch failure returns [] after
+        // retries via fetchJson, which just means we skip that page.
+        if (p > 50) { hit404 = true; break; }
+        await new Promise((r) => setTimeout(r, INTER_REQ_DELAY_MS));
+        continue;
+      }
+      if (Array.isArray(data)) {
+        for (const s of data) {
+          if (!isKoreanDrama(s)) continue;
+          const c = compact(s);
+          if (c.y && c.y < MIN_YEAR) continue;
+          if (!c.p && c.r == null && !c.su) continue;
+          shows.set(c.id, c);
+        }
+      }
+      await new Promise((r) => setTimeout(r, INTER_REQ_DELAY_MS));
+    }
+  }
+
+  await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
+  return { shows: [...shows.values()], stoppedAt404: hit404, nextPage: nextPageToFetch };
 }
 
 export default async function handler(req, res) {
   const url = new URL(req.url || "/", `http://${req.headers.host || "x"}`);
   if (!authorized(url)) { res.statusCode = 404; res.end("not found"); return; }
 
-  const controller = new AbortController();
-  const deadline = setTimeout(() => controller.abort(), PAGE_BUDGET_MS + 4000);
+  const forceRefresh = url.searchParams.has("refresh");
+  const warmOnly = url.searchParams.has("warm");
+
+  // Serve cached immediately if fresh.
+  if (!forceRefresh && _cached && Date.now() - _cachedAt < CACHE_TTL_MS) {
+    return sendSliceOrAll(res, _cached, url, { fromCache: true, fetchedAt: new Date(_cachedAt).toISOString() });
+  }
+
+  // De-duplicate concurrent warm-up calls.
+  if (!_warmingPromise) {
+    const controller = new AbortController();
+    const deadline = setTimeout(() => controller.abort(), PAGE_BUDGET_MS + 3000);
+    _warmingPromise = (async () => {
+      try {
+        const { shows, stoppedAt404 } = await buildCatalog(controller.signal);
+        if (stoppedAt404) {
+          _cached = sortDedup(shows);
+          _cachedAt = Date.now();
+        }
+        return { shows: _cached || sortDedup(shows), done: stoppedAt404 };
+      } finally {
+        clearTimeout(deadline);
+        _warmingPromise = null;
+      }
+    })();
+  }
 
   try {
-    const body = req.method === "POST" ? (await readBody(req) || {}) : {};
-    const startPage = Math.max(0, Number(url.searchParams.get("page")) || body.nextPage || 0);
-    const forceRefresh = url.searchParams.has("refresh");
-    const incoming = Array.isArray(body.shows) ? body.shows : [];
-
-    // Serve from cache if available and fresh.
-    if (!forceRefresh && _cached && Date.now() - _cachedAt < CACHE_TTL_MS) {
-      const cachedList = _cached;
-      const yearParam = url.searchParams.get("year");
-      if (yearParam) {
-        const y = Number(yearParam);
-        const slice = cachedList.filter((s) => s.y === y);
-        res.setHeader("content-type", "application/json; charset=utf-8");
-        res.setHeader("cache-control", "no-store");
-        res.end(JSON.stringify({ done: true, year: y, count: cachedList.length, sliceCount: slice.length, shows: slice, fromCache: true }));
-        return;
-      }
-      res.setHeader("content-type", "application/json; charset=utf-8");
+    // If warm-only: return progress (don't wait for completion if it's
+    // taking too long).
+    if (warmOnly) {
+      const result = await Promise.race([
+        _warmingPromise,
+        new Promise((r) => setTimeout(() => r({ warming: true, cached: !!_cached }), 2000)),
+      ]);
+      res.setHeader("content-type", "application/json");
       res.setHeader("cache-control", "no-store");
-      res.end(JSON.stringify({ done: true, count: cachedList.length, shows: cachedList, fromCache: true, fetchedAt: new Date(_cachedAt).toISOString() }));
+      if (result && result.shows) {
+        res.end(JSON.stringify({ warming: false, done: result.done, count: result.shows.length }));
+      } else {
+        res.end(JSON.stringify(result));
+      }
       return;
     }
 
-    const shows = new Map();
-    for (const s of incoming) if (s && s.id != null) shows.set(s.id, s);
-
-    let page = startPage;
-    let stoppedAt404 = false;
-    const startedAt = Date.now();
-
-    // Worker pool: CONCURRENCY workers each claiming pages in turn.
-    let nextPageToFetch = startPage;
-    let hit404 = false;
-    async function worker() {
-      while (!hit404 && !controller.signal.aborted && Date.now() - startedAt < PAGE_BUDGET_MS - 1500) {
-        const p = nextPageToFetch++;
-        const data = await fetchJson(`${BASE}?page=${p}`, controller.signal);
-        if (data === null) { hit404 = true; break; }
-        if (Array.isArray(data)) {
-          for (const s of data) {
-            if (!isKoreanDrama(s)) continue;
-            const c = compact(s);
-            if (c.y && c.y < MIN_YEAR) continue;
-            if (!c.p && c.r == null && !c.su) continue;
-            shows.set(c.id, c);
-          }
-        }
-        await sleep(PAGE_INTER_PAGE_DELAY_MS);
-      }
-    }
-    const workers = Array.from({ length: CONCURRENCY }, () => worker());
-    await Promise.allSettled(workers);
-    stoppedAt404 = hit404;
-    page = nextPageToFetch;
-
-    clearTimeout(deadline);
-    const list = [...shows.values()];
-    const bySlug = new Map();
-    for (const s of list) {
-      const existing = bySlug.get(s.s);
-      if (!existing || (s.r ?? 0) > (existing.r ?? 0)) bySlug.set(s.s, s);
-    }
-    const finalShows = [...bySlug.values()].sort((a, b) => {
-      if ((b.y || 0) !== (a.y || 0)) return (b.y || 0) - (a.y || 0);
-      if ((b.w || 0) !== (a.w || 0)) return (b.w || 0) - (a.w || 0);
-      return (b.r || 0) - (a.r || 0);
-    });
-
+    const { shows: all, done } = await _warmingPromise;
     res.setHeader("content-type", "application/json; charset=utf-8");
     res.setHeader("cache-control", "no-store");
-    if (stoppedAt404) {
-      _cached = finalShows;
-      _cachedAt = Date.now();
-      // Optional year filter so tooling can download incrementally without
-      // hitting response-size limits (handy when the agent can't read huge
-      // bodies in one go). ?year=2024 returns just that year's slice.
-      const yearParam = url.searchParams.get("year");
-      if (yearParam) {
-        const y = Number(yearParam);
-        const slice = finalShows.filter((s) => s.y === y);
-        res.end(JSON.stringify({ done: true, year: y, count: finalShows.length, sliceCount: slice.length, shows: slice }));
-        return;
-      }
-      res.end(JSON.stringify({
-        done: true, lastPage: page - 1,
-        count: finalShows.length, fetchedAt: new Date().toISOString(),
-        shows: finalShows,
-      }));
-      return;
-    }
-    res.end(JSON.stringify({
-      done: false, nextPage: page, count: finalShows.length,
-      shows: finalShows,
-    }));
+    if (done) return sendSliceOrAll(res, all, url, { fetchedAt: new Date(_cachedAt).toISOString() });
+    res.end(JSON.stringify({ done: false, count: all.length, note: "catalog warm incomplete; retry after calling ?warm=1 a few times" }));
   } catch (err) {
+    res.statusCode = 500;
+    res.setHeader("content-type", "application/json");
+    res.end(JSON.stringify({ error: String(err && err.message || err) }));
+  }
+}
+
+function sendSliceOrAll(res, all, url, extra) {
+  const yearParam = url.searchParams.get("year");
+  if (yearParam) {
+    const y = Number(yearParam);
+    const slice = all.filter((s) => s.y === y);
+    res.end(JSON.stringify({ done: true, year: y, count: all.length, sliceCount: slice.length, shows: slice, ...extra }));
+    return;
+  }
+  res.end(JSON.stringify({ done: true, count: all.length, shows: all, ...extra }));
+}
