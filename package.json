@@ -9,7 +9,9 @@
     "preview": "vite preview --host 0.0.0.0 --port 4173",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "validate": "vitest run tests/validate.seed.test.ts tests/forbidden-sources.test.ts",
+    "smoke": "playwright test tests/smoke.spec.ts"
   },
   "dependencies": {
     "react": "^18.3.1",

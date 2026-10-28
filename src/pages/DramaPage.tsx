@@ -4,26 +4,44 @@ import Poster from "@/components/Poster";
 import DramaCard from "@/components/DramaCard";
 import { useLiveData } from "@/LiveData";
 import { deriveStatus, statusLabel, canDisplayRating } from "@/lib/status";
+import type { Drama } from "@/data";
+import type { EnrichedDrama } from "@/api";
+
+type AnyDrama = Drama | EnrichedDrama;
 
 export default function DramaPage() {
   const { slug } = useParams();
   const { findBySlug, shelves } = useLiveData();
   const drama = useMemo(() => findBySlug(slug ?? ""), [findBySlug, slug]);
-  const backdrop = (drama as any).backdrop as string | undefined;
-  const runtime = (drama as any).runtime as number | undefined;
-  const imdbId = (drama as any).imdbId as string | undefined;
-  const tvStatus = (drama as any).status as string | undefined;
-  const nextAir = (drama as any).nextAirDate as string | undefined;
-  const status = deriveStatus({ status: tvStatus, premiered: `${drama.year}-01-01`, nextAirDate: nextAir });
+
+  if (!drama) return <NotFound slug={slug} />;
+
+  const backdrop = (drama as EnrichedDrama).backdrop;
+  const runtime = (drama as EnrichedDrama).runtime;
+  const imdbId = (drama as EnrichedDrama).imdbId;
+  const tvStatus = (drama as EnrichedDrama).status;
+  const status = deriveStatus({
+    status: tvStatus,
+    premiered: drama.year ? `${drama.year}-01-01` : undefined,
+  });
 
   const related = useMemo(() => {
-    const all: any[] = [];
-    for (const s of shelves) for (const d of s.items) all.push(d);
-    return all
-      .filter((d) => d.slug !== drama.slug)
-      .filter((d) => d.genres.some((g: string) => drama.genres.includes(g)))
-      .slice(0, 8);
+    const seen = new Set<string>([drama.slug]);
+    const out: AnyDrama[] = [];
+    for (const s of shelves) {
+      for (const d of s.items) {
+        if (seen.has(d.slug)) continue;
+        if (!d.genres.some((g: string) => drama.genres.includes(g))) continue;
+        seen.add(d.slug);
+        out.push(d);
+        if (out.length >= 8) break;
+      }
+      if (out.length >= 8) break;
+    }
+    return out;
   }, [drama, shelves]);
+
+  const words = drama.title.split(" ");
 
   return (
     <section className="relative z-10 px-4 md:px-8 lg:px-12 py-8">
@@ -44,14 +62,14 @@ export default function DramaPage() {
         <div className="relative grid md:grid-cols-[280px_1fr] gap-8 p-6 md:p-10 items-start rise">
           <div className="mx-auto md:mx-0 w-[220px] md:w-full">
             <div className="relative rounded-2xl overflow-hidden shadow-2xl floaty" style={{border:"1px solid rgba(255,255,255,.1)"}}>
-              <Poster drama={{...drama, title:""}} size="lg" showTitle={false} className="!rounded-none !h-[330px]" />
+              <Poster drama={drama} size="lg" showTitle={false} className="!rounded-none !h-[330px]" />
             </div>
           </div>
           <div>
-            <span className="kicker"><span className="dot"/>{drama.network ?? "KDramaWorld entry"}</span>
+            <span className="kicker"><span className="dot"/>{drama.network ?? "KDramaWorld"}</span>
             <h1 className="section-title mt-4 text-4xl md:text-6xl leading-tight text-white">
-              {drama.title.split(" ").map((w,i)=>(
-                <span key={i} className={i === drama.title.split(" ").length-1 ? "gradient-text italic" : ""}>
+              {words.map((w,i)=>(
+                <span key={i} className={i === words.length-1 ? "gradient-text italic" : ""}>
                   {w}{" "}
                 </span>
               ))}
@@ -86,15 +104,20 @@ export default function DramaPage() {
                 Browse similar
               </Link>
               {imdbId && (
-                <a href={`https://www.imdb.com/title/${imdbId}/`} target="_blank" rel="noreferrer"
+                <a href={`https://www.imdb.com/title/${imdbId}/`} target="_blank" rel="noopener noreferrer nofollow"
                    className="btn-ghost h-11 px-5 rounded-xl inline-flex items-center gap-2 font-semibold">
                   IMDb
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
                 </a>
               )}
-              <button aria-label="Share" className="btn-ghost h-11 w-11 grid place-items-center rounded-xl">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
-              </button>
+              <a
+                href={`https://mydramalist.com/search?q=${encodeURIComponent(drama.title)}`}
+                target="_blank" rel="noopener noreferrer nofollow"
+                className="btn-ghost h-11 px-5 rounded-xl inline-flex items-center gap-2 font-semibold"
+              >
+                Search on MyDramaList
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
+              </a>
             </div>
 
             <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl">
@@ -122,6 +145,22 @@ export default function DramaPage() {
           </div>
         </section>
       )}
+    </section>
+  );
+}
+
+function NotFound({ slug }: { slug?: string }) {
+  return (
+    <section className="relative z-10 px-4 md:px-8 lg:px-12 py-16 max-w-2xl mx-auto text-center">
+      <div className="text-7xl md:text-8xl font-serif italic gradient-text mb-4">404</div>
+      <h1 className="section-title text-3xl md:text-4xl mb-3">Drama not found</h1>
+      <p className="text-white/70 mb-8">
+        We couldn't find a drama matching <code className="px-1.5 py-0.5 rounded glass text-sm">{slug ?? ""}</code>.
+        It may have been renamed or removed.
+      </p>
+      <Link to="/" className="btn-primary h-11 px-6 rounded-xl inline-flex items-center gap-2 font-semibold">
+        Back to home
+      </Link>
     </section>
   );
 }
