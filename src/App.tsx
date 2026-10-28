@@ -51,6 +51,10 @@ function Home() {
 }
 
 function NotFoundPage() {
+  useSeo({
+    title: "Page not found",
+    description: "That URL doesn't live here — the drama you're looking for may not be in the archive yet.",
+  });
   return (
     <section className="relative z-10 px-4 md:px-8 lg:px-12 py-20 max-w-xl mx-auto text-center">
       <div className="text-7xl md:text-8xl font-serif italic gradient-text mb-4">404</div>

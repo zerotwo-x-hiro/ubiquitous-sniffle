@@ -2,6 +2,7 @@ import { Link, useParams, Navigate } from "react-router-dom";
 import { actors } from "@/data";
 import { useLiveData } from "@/LiveData";
 import DramaCard from "@/components/DramaCard";
+import { useSeo } from "@/lib/seo";
 
 // Map curated actors to slugs of dramas they appear in (manually curated;
 // TVMaze cast data would supersede this once the serverless layer ships).
@@ -20,6 +21,13 @@ export default function ActorPage() {
   const { slug } = useParams<{ slug: string }>();
   const actor = actors.find((a) => a.slug === slug);
   const { findBySlug } = useLiveData();
+
+  useSeo({
+    title: actor ? `${actor.name} — Filmography` : "Actor",
+    description: actor
+      ? `${actor.name} filmography on KDramaWorld — dramas they appear in, with ratings, posters and details.`
+      : "Actor filmography on KDramaWorld.",
+  });
 
   if (!actor) return <Navigate to="/actors" replace />;
 

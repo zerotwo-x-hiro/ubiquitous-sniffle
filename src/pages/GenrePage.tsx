@@ -3,6 +3,7 @@ import { Link, useParams, Navigate } from "react-router-dom";
 import { useLiveData } from "@/LiveData";
 import { genres as genreDefs } from "@/data";
 import DramaCard from "@/components/DramaCard";
+import { useSeo } from "@/lib/seo";
 
 export default function GenrePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -24,6 +25,13 @@ export default function GenrePage() {
     }
     return [...m.values()].sort((a: any, b: any) => (b.rating || 0) - (a.rating || 0));
   }, [def, shelves]);
+
+  useSeo({
+    title: def ? `${def.name} dramas` : "Genre",
+    description: def
+      ? `The best K-dramas in the ${def.name} genre — curated, rated, poster-rich, live from TVMaze.`
+      : "Genre collection on KDramaWorld.",
+  });
 
   if (!def) return <Navigate to="/genres" replace />;
 

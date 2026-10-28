@@ -1,10 +1,15 @@
 import { Link } from "react-router-dom";
 import { actors } from "@/data";
+import { useSeo } from "@/lib/seo";
 
 // Korean-name syllable palette, decorative backdrop behind each actor tile.
 const ART = ["art-a", "art-b", "art-c", "art-d", "art-e", "art-f", "art-g", "art-h"];
 
 export default function ActorsIndexPage() {
+  useSeo({
+    title: "Actors",
+    description: "Korean actors in the KDramaWorld universe — filmographies link back to dramas in the archive.",
+  });
   return (
     <section className="relative z-10 px-4 md:px-8 lg:px-12 py-10 md:py-16">
       <div className="max-w-7xl mx-auto">

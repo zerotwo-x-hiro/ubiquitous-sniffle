@@ -1,9 +1,14 @@
 import { Link } from "react-router-dom";
 import { useLiveData } from "@/LiveData";
 import DramaCard from "@/components/DramaCard";
+import { useSeo } from "@/lib/seo";
 
 export default function ListsPage() {
   const { collections } = useLiveData();
+  useSeo({
+    title: "Collections",
+    description: "Hand-built, opinionated K-drama lists — all-time greats, second leads, midnight watchlist. Every pick is human-chosen.",
+  });
 
   return (
     <section className="relative z-10 px-4 md:px-8 lg:px-12 py-10 md:py-16">
