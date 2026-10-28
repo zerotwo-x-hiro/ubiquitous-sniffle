@@ -14,13 +14,15 @@ export default function Nav() {
   return (
     <header className="sticky top-0 z-40 px-4 md:px-8 lg:px-12 pt-3 md:pt-4">
       <div className="glass-strong rounded-2xl px-4 md:px-6 h-14 md:h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2.5">
-          <span className="w-9 h-9 rounded-xl grid place-items-center font-black text-white"
-                style={{ background: "linear-gradient(135deg,#ff5ea8,#9b5cff,#4aa8ff)", boxShadow:"var(--shadow-glow)"}}>
-            K
-          </span>
-          <span className="font-display text-lg md:text-xl font-black tracking-tight">
-            KDrama<span className="gradient-text">World</span>
+        <Link to="/" className="flex items-center gap-3">
+          <span className="dojang" title="KDramaWorld" aria-hidden>韓</span>
+          <span className="leading-none">
+            <span className="font-display text-lg md:text-xl font-black tracking-tight block">
+              KDrama<span className="gradient-text">World</span>
+            </span>
+            <span className="font-hangul text-[10px] block mt-0.5 tracking-widest" style={{color:"var(--text-dim)"}}>
+              한국 드라마 · 影像世界
+            </span>
           </span>
         </Link>
 

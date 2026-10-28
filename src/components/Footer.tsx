@@ -3,16 +3,21 @@ import { Link } from "react-router-dom";
 export default function Footer() {
   return (
     <footer className="relative z-10 px-4 md:px-8 lg:px-12 pt-10 pb-14">
-      <div className="glass-strong rounded-3xl p-8 md:p-10 relative overflow-hidden">
+      <div className="glass-strong rounded-3xl p-8 md:p-10 relative overflow-hidden hanji">
+        <span className="hanja-mark" style={{ bottom: "-6rem", left: "-2rem", fontSize: "clamp(12rem,22vw,22rem)" }} aria-hidden>드</span>
         <div className="absolute -top-10 right-0 w-[420px] h-[420px] rounded-full blur-3xl opacity-30 aurora"
              style={{background:"radial-gradient(circle,#9b5cff,transparent 60%)"}} />
         <div className="relative grid md:grid-cols-[1.4fr_1fr_1fr_1fr] gap-8">
           <div>
-            <Link to="/" className="flex items-center gap-2.5">
-              <span className="w-10 h-10 rounded-xl grid place-items-center font-black text-white"
-                    style={{background:"linear-gradient(135deg,#ff5ea8,#9b5cff,#4aa8ff)", boxShadow:"var(--shadow-glow)"}}>K</span>
-              <span className="font-display text-2xl font-black tracking-tight">
-                KDrama<span className="gradient-text">World</span>
+            <Link to="/" className="flex items-center gap-3">
+              <span className="dojang" aria-hidden>韓</span>
+              <span className="leading-none">
+                <span className="font-display text-2xl font-black tracking-tight block">
+                  KDrama<span className="gradient-text">World</span>
+                </span>
+                <span className="font-hangul text-[10px] block mt-0.5 tracking-widest" style={{color:"var(--text-dim)"}}>
+                  한국 드라마 · 影像世界
+                </span>
               </span>
             </Link>
             <p className="mt-4 text-sm max-w-sm" style={{color:"var(--text-muted)"}}>
@@ -42,8 +47,12 @@ export default function Footer() {
         </div>
         <div className="relative mt-10 pt-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
              style={{borderTop:"1px solid var(--border)"}}>
-          <div className="text-xs" style={{color:"var(--text-dim)"}}>
-            © {new Date().getFullYear()} KDramaWorld. Metadata courtesy of TVMaze (tvmaze.com). Made with ♡ for people who rewatch the same OST.
+          <div className="flex items-center gap-3">
+            <span className="taegeuk" aria-hidden />
+            <div className="text-xs leading-relaxed" style={{color:"var(--text-dim)"}}>
+              © {new Date().getFullYear()} KDramaWorld. Metadata courtesy of TVMaze (tvmaze.com).<br className="hidden md:block" />
+              Made with ♡ for people who rewatch the same OST. <span className="font-hangul">잘 보고 갑니다 — 오늘도 행복하세요.</span>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {[
