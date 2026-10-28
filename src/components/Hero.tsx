@@ -9,7 +9,12 @@ export default function Hero() {
   const tvStatus = (featured as any).status;
   const runtime = (featured as any).runtime as number | undefined;
   const nextAir = (featured as any).nextAirDate as string | undefined;
-  const status = deriveStatus({ status: tvStatus, premiered: `${featured.year}-01-01`, nextAirDate: nextAir });
+  const status = deriveStatus({
+    status: tvStatus,
+    premiered: `${featured.year}-01-01`,
+    ended: tvStatus === "Ended" && featured.year ? `${featured.year}-12-31` : undefined,
+    nextAirDate: nextAir,
+  });
 
   return (
     <section className="relative z-10 px-4 md:px-8 lg:px-12 pt-8 md:pt-14 pb-4">

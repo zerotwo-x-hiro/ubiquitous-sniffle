@@ -270,11 +270,22 @@ function mergeShow(seed: Drama, show: TvMazeShow, episodes: boolean): EnrichedDr
   const runtime = show.averageRuntime ?? show.runtime;
   const epCount = show._embedded?.episodes?.length;
   const summary = stripHtml(show.summary);
+  const trusted = typeof seed.tvmazeId === "number" && seed.tvmazeId > 0 && show.id === seed.tvmazeId;
+  // For trusted (curated-tvmazeId) seeds, keep the seed title so common English
+  // titles like "Goblin" (canonically "Guardian: The Lonely and Great God")
+  // stay as users expect them in shelves/headers. For fuzzy matches, prefer
+  // TVMaze's title since it's the one we matched against.
+  const title = trusted ? seed.title : (show.name || seed.title);
+  // Keep seed rating if TVMaze returns 0 (some legacy shows show null even
+  // though they have a well-known community rating; seed is our curated value).
+  const tvRating = pickRating(show);
+  const rating = tvRating > 0 ? tvRating : (seed.rating || 0);
+  // Same for genres/blurb/network — prefer TVMaze, fall back to seed.
   return {
     ...seed,
-    title: show.name || seed.title,
+    title,
     year,
-    rating: pickRating(show),
+    rating,
     episodes: epCount ?? seed.episodes,
     genres: show.genres && show.genres.length ? show.genres : seed.genres,
     blurb: summary ? summary.slice(0, 280) + (summary.length > 280 ? "…" : "") : seed.blurb,
