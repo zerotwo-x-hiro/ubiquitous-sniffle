@@ -36,6 +36,7 @@ export type EnrichedDrama = Drama & {
   runtime?: number;
   summaryText?: string;  // HTML stripped for blurb
   fetchError?: string;
+  _needsImageRefetch?: number; // internal: tvmaze id to fetch image for if initial hit lacked it
 };
 
 const BASE = "https://api.tvmaze.com";
@@ -145,57 +146,107 @@ function yearMatches(show: TvMazeShow, seedYear: number): boolean {
 export async function fetchDramaByTitle(seed: Drama, options?: { episodes?: boolean }): Promise<EnrichedDrama> {
   const { episodes = false } = options ?? {};
 
-  // Build primary URL: id lookup when we have an id, otherwise singlesearch.
-  const useId = typeof seed.tvmazeId === "number" && seed.tvmazeId > 0;
-  const url = useId
-    ? `${BASE}/shows/${seed.tvmazeId}${episodes ? "?embed=episodes" : ""}`
-    : (() => {
-        const params = new URLSearchParams({ q: seed.title });
-        if (episodes) params.set("embed", "episodes");
-        return `${BASE}/singlesearch/shows?${params.toString()}`;
-      })();
+  // Try multiple endpoints in order: /shows/:id (if seed has one), /singlesearch
+  // (best-effort top hit), and /search (array of matches). /singlesearch returns
+  // a stripped record (no image) for some popular shows, so we always consider
+  // the /search list and pick the best-validated candidate; we also run a
+  // follow-up /shows/:id hydrate if the winning match lacks a poster.
+  const urls: string[] = [];
+  if (typeof seed.tvmazeId === "number" && seed.tvmazeId > 0) {
+    urls.push(`${BASE}/shows/${seed.tvmazeId}${episodes ? "?embed=episodes" : ""}`);
+  }
+  const singleParams = new URLSearchParams({ q: seed.title });
+  if (episodes) singleParams.set("embed", "episodes");
+  urls.push(`${BASE}/singlesearch/shows?${singleParams.toString()}`);
+  urls.push(`${BASE}/search/shows?q=${encodeURIComponent(seed.title)}`);
 
-  try {
-    const res = await fetch(url, { headers: { Accept: "application/json" } });
-    if (!res.ok) {
-      if (res.status === 404) return { ...seed };
-      throw new Error(`TVMaze ${res.status}`);
+  let best: EnrichedDrama | null = null;
+  let lastErr: Error | null = null;
+
+  function scoreCandidate(e: EnrichedDrama): number {
+    // Prefer results that have a poster, an explicit network, and a summary.
+    return (e.poster ? 100 : 0) + (e.network ? 10 : 0) + (e.summaryText ? 5 : 0) + (e.rating > 0 ? 2 : 0);
+  }
+
+  function consider(show: TvMazeShow) {
+    if (!show?.id) return;
+    if (!isKoreanDrama(show, seed)) return;
+    if (!yearMatches(show, seed.year)) return;
+    const merged = mergeShow(seed, show, episodes);
+    const cur = best as EnrichedDrama | null;
+    if (!cur || scoreCandidate(merged) > scoreCandidate(cur)) best = merged;
+  }
+
+  for (const url of urls) {
+    // Once we have a candidate with a poster + network, we can stop early to
+    // save requests (but still finish the in-flight batch).
+    const cur = best as EnrichedDrama | null;
+    if (cur && cur.poster && cur.network) break;
+    try {
+      const res = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!res.ok) {
+        if (res.status !== 404) lastErr = new Error(`TVMaze ${res.status}`);
+        continue;
+      }
+      const payload = await res.json();
+      if (Array.isArray(payload)) {
+        for (const it of payload) consider(it?.show);
+      } else {
+        consider(payload);
+      }
+    } catch (e) {
+      lastErr = e as Error;
     }
-    const show: TvMazeShow = await res.json();
+  }
 
-    // ALWAYS validate: reject non-Korean shows, year mismatches, and unrelated
-    // titles regardless of whether we fetched by id or by title. TVMaze ids
-    // can be wrong (e.g. 4711 is the anime "Goblin Slayer"), and /singlesearch
-    // can return semantically unrelated matches ("Crash Landing on You" ->
-    // AMC's "Bunny", "Secret Garden" -> Smithsonian "Mystery Files").
-    if (!isKoreanDrama(show, seed)) return { ...seed };
-    if (!yearMatches(show, seed.year)) return { ...seed };
+  if (!best) return { ...seed, fetchError: lastErr?.message };
 
-    const year = yearFrom(show.premiered) ?? seed.year;
-    const runtime = show.averageRuntime ?? show.runtime;
-    const epCount = show._embedded?.episodes?.length;
-    const summary = stripHtml(show.summary);
+  // If best candidate lacks a poster, hydrate via /shows/:id (full record).
+  const hydrated = await hydratePosterIfMissing(best);
+  return hydrated;
+}
 
-    const merged: EnrichedDrama = {
-      ...seed,
-      title: show.name || seed.title,
-      year,
-      rating: pickRating(show),
-      episodes: epCount ?? seed.episodes,
-      genres: show.genres && show.genres.length ? show.genres : seed.genres,
-      blurb: summary ? summary.slice(0, 280) + (summary.length > 280 ? "…" : "") : seed.blurb,
-      network: pickNetwork(show) ?? seed.network,
-      status: show.status ?? undefined,
-      runtime: runtime ?? undefined,
-      tvmazeId: show.id,
-      poster: show.image?.medium ?? undefined,
-      backdrop: show.image?.original ?? undefined,
-      imdbId: show.externals?.imdb ?? undefined,
-      summaryText: summary || undefined,
+function mergeShow(seed: Drama, show: TvMazeShow, episodes: boolean): EnrichedDrama {
+  const year = yearFrom(show.premiered) ?? seed.year;
+  const runtime = show.averageRuntime ?? show.runtime;
+  const epCount = show._embedded?.episodes?.length;
+  const summary = stripHtml(show.summary);
+  return {
+    ...seed,
+    title: show.name || seed.title,
+    year,
+    rating: pickRating(show),
+    episodes: epCount ?? seed.episodes,
+    genres: show.genres && show.genres.length ? show.genres : seed.genres,
+    blurb: summary ? summary.slice(0, 280) + (summary.length > 280 ? "…" : "") : seed.blurb,
+    network: pickNetwork(show) ?? seed.network,
+    status: show.status ?? undefined,
+    runtime: runtime ?? undefined,
+    tvmazeId: show.id,
+    poster: show.image?.medium ?? undefined,
+    backdrop: show.image?.original ?? undefined,
+    imdbId: show.externals?.imdb ?? undefined,
+    summaryText: summary || undefined,
+  };
+}
+
+/** If a merged result is missing its poster (because /singlesearch returned a
+ *  stripped record), fetch the canonical /shows/:id record which always has
+ *  images and patch the poster/backdrop fields. Returns the input unchanged if
+ *  it already has a poster or the refetch fails. */
+async function hydratePosterIfMissing(e: EnrichedDrama): Promise<EnrichedDrama> {
+  if (e.poster || !e.tvmazeId) return e;
+  try {
+    const res = await fetch(`${BASE}/shows/${e.tvmazeId}`, { headers: { Accept: "application/json" } });
+    if (!res.ok) return e;
+    const full: TvMazeShow = await res.json();
+    return {
+      ...e,
+      poster: full.image?.medium ?? e.poster,
+      backdrop: full.image?.original ?? e.backdrop,
     };
-    return merged;
-  } catch (e) {
-    return { ...seed, fetchError: (e as Error).message };
+  } catch {
+    return e;
   }
 }
 
