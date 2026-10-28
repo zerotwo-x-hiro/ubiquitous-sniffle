@@ -79,12 +79,40 @@ function pickRating(show: TvMazeShow): number {
   return Math.round(r * 10) / 10;
 }
 
+/** True when a TVMaze show is likely the Korean drama we want. */
+function isKoreanDrama(show: TvMazeShow): boolean {
+  const cc = show.network?.country?.code ?? show.webChannel?.country?.code;
+  if (cc === "KR") return true;
+  if ((show.language || "").toLowerCase() === "korean") return true;
+  // Reject shows whose network/channel is clearly Japanese anime or non-KR.
+  const chan = (show.network?.name || show.webChannel?.name || "").toLowerCase();
+  if (/(at-x|tokyo mx|nhk|fuji tv|tbs|mbs|abema|wowow|weverse|vlive)/.test(chan)) return false;
+  return false;
+}
+
+/** Year-distance sanity: reject if TVMaze year differs by more than 2 years
+ *  from seed year (unless seed year is explicitly a placeholder 0). */
+function yearMatches(show: TvMazeShow, seedYear: number): boolean {
+  const y = yearFrom(show.premiered);
+  if (!y) return true;
+  if (!seedYear) return true;
+  return Math.abs(y - seedYear) <= 2;
+}
+
 /** Given a curated seed Drama, enrich it with live TVMaze data when found. */
 export async function fetchDramaByTitle(seed: Drama, options?: { episodes?: boolean }): Promise<EnrichedDrama> {
   const { episodes = false } = options ?? {};
-  const params = new URLSearchParams({ q: seed.title });
-  if (episodes) params.set("embed", "episodes");
-  const url = `${BASE}/singlesearch/shows?${params.toString()}`;
+
+  // Prefer direct /shows/:id lookup when we have a known-good TVMaze id —
+  // avoids the Goblin → Goblin Slayer (AT-X anime) class of F1 wrong matches.
+  const useId = typeof seed.tvmazeId === "number" && seed.tvmazeId > 0;
+  const url = useId
+    ? `${BASE}/shows/${seed.tvmazeId}${episodes ? "?embed=episodes" : ""}`
+    : (() => {
+        const params = new URLSearchParams({ q: seed.title });
+        if (episodes) params.set("embed", "episodes");
+        return `${BASE}/singlesearch/shows?${params.toString()}`;
+      })();
 
   try {
     const res = await fetch(url, { headers: { Accept: "application/json" } });
@@ -93,6 +121,12 @@ export async function fetchDramaByTitle(seed: Drama, options?: { episodes?: bool
       throw new Error(`TVMaze ${res.status}`);
     }
     const show: TvMazeShow = await res.json();
+
+    // Validate fuzzy title matches (only for /singlesearch, not id lookups)
+    if (!useId) {
+      if (!isKoreanDrama(show)) return { ...seed };
+      if (!yearMatches(show, seed.year)) return { ...seed };
+    }
 
     const year = yearFrom(show.premiered) ?? seed.year;
     const runtime = show.averageRuntime ?? show.runtime;
@@ -103,7 +137,7 @@ export async function fetchDramaByTitle(seed: Drama, options?: { episodes?: bool
       ...seed,
       title: show.name || seed.title,
       year,
-      rating: pickRating(show) || seed.rating,
+      rating: pickRating(show),
       episodes: epCount ?? seed.episodes,
       genres: show.genres && show.genres.length ? show.genres : seed.genres,
       blurb: summary ? summary.slice(0, 280) + (summary.length > 280 ? "…" : "") : seed.blurb,
@@ -118,7 +152,6 @@ export async function fetchDramaByTitle(seed: Drama, options?: { episodes?: bool
     };
     return merged;
   } catch (e) {
-    // Graceful fallback — keep curated data so the UI never breaks.
     return { ...seed, fetchError: (e as Error).message };
   }
 }
@@ -165,14 +198,17 @@ export async function fetchRecentKdramas(limit = 12): Promise<EnrichedDrama[]> {
       for (const entry of day) {
         const show: TvMazeShow | undefined = entry?._embedded?.show ?? entry?.show;
         if (!show?.id || seen.has(show.id)) continue;
-        // Keep shows likely to be K-dramas: korean language, drama genre, premiered recent, KR network/webchannel
+        // Keep only genuine K-dramas: KR country or Korean language AND drama genre,
+        // reject known K-pop/variety channel content (V Live, Weverse, etc.)
+        const chan = (show.network?.name || show.webChannel?.name || "").toLowerCase();
+        const isKPopChannel = /(vlive|weverse|v live|kakao tv)/.test(chan);
+        const isReality = (show.genres || []).some((g: string) => /reality|variety|talk|music|game.show/i.test(g));
         const isKorean =
           (show.network?.country?.code === "KR" ||
            show.webChannel?.country?.code === "KR" ||
-           show.language === "Korean" ||
-           /korean|kdrama|k-drama/i.test(show.name + " " + stripHtml(show.summary)));
+           (show.language || "").toLowerCase() === "korean");
         const isDrama = (show.genres || []).some((g: string) => /drama/i.test(g));
-        if (!isKorean && !isDrama) continue;
+        if (isKPopChannel || isReality || !(isKorean && isDrama)) continue;
         seen.add(show.id);
 
         const summary = stripHtml(show.summary);
