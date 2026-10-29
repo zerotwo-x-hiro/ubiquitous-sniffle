@@ -54,7 +54,7 @@ for (const path of ROUTES) {
 }
 
 test("unknown drama slug shows our 404, not a fallback drama", async ({ page }) => {
-  await page.goto("/drama/dream-to-you", { waitUntil: "domcontentloaded" });
+  await page.goto("/drama/this-is-definitely-not-a-tvmaze-drama-999999999999", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: "Drama not found" })).toBeVisible({ timeout: 30_000 });
   const body = await page.$eval("body", el => (el as HTMLElement).innerText);
   expect(body).not.toContain("My Mister");
