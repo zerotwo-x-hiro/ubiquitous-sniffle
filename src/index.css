@@ -55,6 +55,12 @@
   --nav-icon: #f7f7f8;
   --chip-bg: rgba(255,255,255,.08);
   --shadow-glow: 0 0 24px rgba(250,23,75,.25);
+  --theme-toggle-border: rgba(255,255,255,0.25);
+  --nav-menu-hover: rgba(255,255,255,0.08);
+  --hero-ghost-border: rgba(255,255,255,0.5);
+  --hero-ghost-bg: rgba(0,0,0,0.4);
+  --hero-text: #ffffff;
+  --hero-text-muted: rgba(255,255,255,0.7);
 }
 :root.light {
   color-scheme: light;
@@ -92,6 +98,12 @@
   --nav-icon: #2e1c10;
   --chip-bg: rgba(67,43,23,.06);
   --shadow-glow: 0 0 20px rgba(193,139,54,.16);
+  --theme-toggle-border: rgba(43,29,14,0.25);
+  --nav-menu-hover: rgba(43,29,14,0.06);
+  --hero-ghost-border: rgba(43,29,14,0.35);
+  --hero-ghost-bg: rgba(255,255,255,0.55);
+  --hero-text: #ffffff;
+  --hero-text-muted: rgba(255,255,255,0.72);
 }
 html, body, #root { min-height: 100%; }
 body {
