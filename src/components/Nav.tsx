@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useTheme } from "@/theme";
 import { useAuth } from "@/Auth";
-import { useState, useRef, useEffect } from "react";
 
 const LINKS = [
   { to: "/", label: "Home", end: true },
@@ -39,6 +38,7 @@ export default function Nav() {
   const { search } = useLocation();
   const { user, profile, openAuthModal, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const onClick = (e: MouseEvent) => { if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false); };
@@ -73,8 +73,23 @@ export default function Nav() {
 
         <div className="flex-1" />
 
-        <div className="header-actions flex items-center gap-3">
-          <Link to="/explore" aria-label="Search Korean dramas and movies" className="header-search flex items-center gap-2 rounded-full px-3 h-9">
+        {/* Mobile hamburger */}
+        <button
+          onClick={() => setMobileOpen((v) => !v)}
+          aria-label="Menu"
+          className="lg:hidden grid place-items-center"
+          style={{ color: "var(--nav-icon)", width: 34, height: 34 }}
+        >
+          {mobileOpen ? (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          ) : (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg>
+          )}
+        </button>
+
+        <div className="hidden lg:flex header-actions items-center gap-3">
+          <Link to="/explore" aria-label="Search Korean dramas and movies"
+                className="header-search flex items-center gap-2 rounded-full px-3 h-9 transition-colors">
             <SearchIcon />
             <span className="hidden xl:inline text-[12px] whitespace-nowrap">Search Korean dramas, movies…</span>
           </Link>
@@ -92,6 +107,7 @@ export default function Nav() {
             className="theme-toggle grid place-items-center rounded-full"
             type="button"
             title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+            style={{ border: "1px solid var(--theme-toggle-border)" }}
           >
             {theme === "dark" ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -129,11 +145,17 @@ export default function Nav() {
                     <div className="text-[12px] truncate" style={{ color: "var(--text-dim)" }}>{user.email}</div>
                   </div>
                   <Link to="/lists" onClick={() => setMenuOpen(false)}
-                        className="block px-4 py-2.5 text-sm hover:bg-black/10 dark:hover:bg-white/10" style={{ color: "var(--text)" }}>
+                        className="block px-4 py-2.5 text-sm transition-colors"
+                        style={{ color: "var(--text)" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--nav-menu-hover)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
                     My List
                   </Link>
                   <button onClick={async () => { setMenuOpen(false); await signOut(); }}
-                          className="block w-full text-left px-4 py-2.5 text-sm hover:bg-black/10 dark:hover:bg-white/10" style={{ color: "var(--text)" }}>
+                          className="block w-full text-left px-4 py-2.5 text-sm transition-colors"
+                          style={{ color: "var(--text)" }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--nav-menu-hover)")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
                     Sign out
                   </button>
                 </div>
@@ -152,10 +174,44 @@ export default function Nav() {
       </div>
 
       {mobileOpen && (
-        <nav className="mobile-nav lg:hidden" aria-label="Mobile navigation">
+        <nav className="mobile-nav lg:hidden px-[2.5%] pb-4 pt-1 flex flex-col gap-1"
+             style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
           {LINKS.map((link) => (
-            <Link key={link.to} to={link.to} onClick={() => setMobileOpen(false)}>{link.label}</Link>
+            <NavLink key={link.to}
+              to={{ pathname: link.to.split("?")[0], search: link.to.includes("?") ? "?" + link.to.split("?")[1] : undefined }}
+              end={link.end}
+              onClick={() => setMobileOpen(false)}
+              className="py-2.5 text-[15px] font-semibold"
+              style={({ isActive }) => ({
+                color: isActive ? "var(--nav-link-active)" : "var(--nav-link)",
+              })}>
+              {link.label}
+            </NavLink>
           ))}
+          <Link to="/explore" onClick={() => setMobileOpen(false)}
+                className="py-2.5 text-[15px] font-semibold flex items-center gap-2"
+                style={{ color: "var(--nav-link)" }}>
+            <SearchIcon />
+            Search
+          </Link>
+          {user ? (
+            <>
+              <Link to="/lists" onClick={() => setMobileOpen(false)}
+                    className="py-2.5 text-[15px] font-semibold" style={{ color: "var(--nav-link)" }}>
+                My List
+              </Link>
+              <button onClick={() => { setMobileOpen(false); signOut(); }}
+                      className="py-2.5 text-[15px] font-semibold text-left" style={{ color: "var(--nav-link)" }}>
+                Sign out
+              </button>
+            </>
+          ) : (
+            <button onClick={() => { setMobileOpen(false); openAuthModal(); }}
+                    className="mt-2 btn-primary h-10 rounded-md font-semibold text-sm"
+                    style={{ color: "#fff" }}>
+              Sign in
+            </button>
+          )}
         </nav>
       )}
     </header>

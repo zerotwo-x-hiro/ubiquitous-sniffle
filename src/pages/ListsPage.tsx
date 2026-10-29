@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DramaCard from "@/components/DramaCard";
-import Collections from "@/components/Collections";
 import { useLiveData } from "@/LiveData";
 import { useAuth } from "@/Auth";
 import { useSeo } from "@/lib/seo";
@@ -43,9 +42,10 @@ export default function ListsPage() {
                 style={{ background: "#fff", color: "#000" }}>
           Sign in to get started
         </button>
-        <div className="mt-16">
-          <Collections />
-        </div>
+        <p className="mt-6 text-sm" style={{ color: "var(--text-dim)" }}>
+          Or explore what others are watching →{" "}
+          <Link to="/explore" className="underline font-semibold" style={{ color: "var(--accent)" }}>browse dramas</Link>
+        </p>
       </section>
     );
   }
