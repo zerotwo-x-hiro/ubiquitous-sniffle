@@ -33,17 +33,18 @@ const BASE = "https://api.tvmaze.com/shows";
 const PER_PAGE = 250;
 const DELAY_MS = 650;        // ~1.5 req/s, safe for TVMaze public API
 const MAX_PAGES = 500;       // hard cap (~125k shows) just in case
-const MIN_YEAR = 1990;       // drop pre-90s noise (any old KR shows that don't matter)
+const MIN_YEAR = 1990;       // drop pre-90s noise
+const MIN_EXPECTED_SHOWS = 2000;
+const MAX_CATALOG_AGE_MS = 24 * 60 * 60 * 1000;
 
-function slugify(s) {
-  return String(s || "")
+function slugify(s, id) {
+  const slug = String(s || "")
     .toLowerCase()
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/['':;,.!?()[\]{}&/\\#%*+=<>|@`~^_]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return slug || ("show-" + id);
 }
 
 function compactShow(s) {
@@ -56,7 +57,7 @@ function compactShow(s) {
   return {
     id: s.id,
     name: s.name,
-    slug: slugify(s.name),
+    slug: slugify(s.name, s.id),
     year,
     rating: s.rating?.average ?? null,
     runtime: s.averageRuntime ?? s.runtime ?? null,
@@ -115,8 +116,28 @@ async function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms + Math.random() * 100));
 }
 
+function isCompleteCatalog(raw) {
+  const shows = raw && raw.shows;
+  if (!raw || !raw._meta || raw._meta.source !== "tvmaze" || !Array.isArray(shows)) return false;
+  if (!Number.isInteger(raw._meta.count) || raw._meta.count < MIN_EXPECTED_SHOWS || raw._meta.count !== shows.length) return false;
+  return new Set(shows.map((s) => s.id)).size === shows.length && new Set(shows.map((s) => s.slug)).size === shows.length;
+}
+
 async function main() {
   mkdirSync(dirname(OUT_PATH), { recursive: true });
+
+  // Reuse only a verified recent snapshot. Clean checkouts contain the placeholder.
+  if (process.argv.includes("--if-stale") && existsSync(OUT_PATH)) {
+    try {
+      const cached = JSON.parse(readFileSync(OUT_PATH, "utf8"));
+      const age = Date.now() - Date.parse((cached._meta && cached._meta.fetchedAt) || "");
+      if (isCompleteCatalog(cached) && age >= 0 && age < MAX_CATALOG_AGE_MS) {
+        console.log("TVMaze catalogue is complete (" + cached.shows.length + " shows); reusing it.");
+        return;
+      }
+    } catch { /* rebuild malformed or missing catalogue */ }
+  }
+
   const incremental = process.argv.includes("--incremental") && existsSync(OUT_PATH);
   let existing = { shows: {}, lastPage: -1 };
   if (incremental) {
@@ -160,23 +181,32 @@ async function main() {
   }
 
   const all = Object.values(existing.shows)
-    // Drop items with no poster and no rating at all (they're placeholders / empty shells on TVMaze)
-    .filter((s) => s.name && (s.poster || s.rating || s.summary))
+    // Include valid named records even when TVMaze has no poster or rating.
+    .filter((s) => Number.isInteger(s.id) && s.name)
     .sort((a, b) => {
-      // Sort: premier desc, then by weight/popularity desc, then rating desc
       const ay = a.year || 0, by = b.year || 0;
       if (by !== ay) return by - ay;
       if ((b.weight || 0) !== (a.weight || 0)) return (b.weight || 0) - (a.weight || 0);
       return (b.rating || 0) - (a.rating || 0);
     });
 
-  // De-dupe by slug (keep highest-rated if two shows share a name-slug — rare, but safe).
-  const bySlug = new Map();
-  for (const s of all) {
-    const existingSlug = bySlug.get(s.slug);
-    if (!existingSlug || (s.rating || 0) > (existingSlug.rating || 0)) bySlug.set(s.slug, s);
+  // Keep distinct TVMaze IDs; suffix duplicate title slugs rather than dropping entries.
+  const usedSlugs = new Set();
+  const finalShows = all.map((show) => {
+    const baseSlug = show.slug || ("show-" + show.id);
+    let slug = baseSlug;
+    if (usedSlugs.has(slug)) slug = baseSlug + "-" + show.id;
+    while (usedSlugs.has(slug)) slug = baseSlug + "-" + show.id + "-" + usedSlugs.size;
+    usedSlugs.add(slug);
+    return slug === show.slug ? show : { ...show, slug };
+  });
+
+  if (page >= MAX_PAGES) {
+    throw new Error("TVMaze pagination reached safety limit of " + MAX_PAGES + " pages; refusing to publish truncated catalogue.");
   }
-  const finalShows = [...bySlug.values()];
+  if (finalShows.length < MIN_EXPECTED_SHOWS) {
+    throw new Error("Only " + finalShows.length + " TVMaze shows collected; expected at least " + MIN_EXPECTED_SHOWS + ". Refusing to publish partial catalogue.");
+  }
 
   const out = {
     _meta: {

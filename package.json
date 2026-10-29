@@ -17,7 +17,9 @@
     "audit": "tsx scripts/audit-content.ts",
     "audit:json": "tsx scripts/audit-content.ts --json",
     "screenshots:before": "tsx scripts/screenshot-baseline.ts before",
-    "screenshots:after": "tsx scripts/screenshot-baseline.ts after"
+    "screenshots:after": "tsx scripts/screenshot-baseline.ts after",
+    "prebuild": "node scripts/fetch-tvmaze-catalog.mjs --if-stale",
+    "catalog:verify": "node scripts/verify-tvmaze-catalog.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",

@@ -22,6 +22,8 @@ type DataState = {
   genreCounts: Record<string, number>;
   liveCount: number;
   loading: boolean;
+  catalogShows: AnyDrama[];
+  catalogLoading: boolean;
   collectionResolve: (c: Collection) => AnyDrama[];
   findBySlug: (slug: string) => AnyDrama | undefined;
 };
@@ -59,6 +61,7 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [liveCount, setLiveCount] = useState(0);
   const [catalogShows, setCatalogShows] = useState<AnyDrama[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,7 +83,10 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
     loadFullCatalog().then((cat) => {
       if (cancelled) return;
       setCatalogShows(cat.shows.map(toDrama));
-    }).catch(() => {});
+      setCatalogLoading(false);
+    }).catch(() => {
+      if (!cancelled) setCatalogLoading(false);
+    });
 
     fetchRecentKdramas(12)
       .then((items) => {
@@ -132,24 +138,32 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
 
     const counts: Record<string, number> = {};
     for (const def of genreDefs) counts[def.slug] = 0;
-    const allShows = [...new Map(allShelved.map(d => [d.slug, d])).values()];
+
+    // Build one archive from curated shelf picks plus every TVMaze record.
+    // Curated entries win on identical slugs; catalogue-only records are appended.
+    const allShowMap = new Map<string, AnyDrama>();
+    for (const d of allShelved) if (!allShowMap.has(d.slug)) allShowMap.set(d.slug, d);
+    for (const d of catalogShows) if (!allShowMap.has(d.slug)) allShowMap.set(d.slug, d);
+    const allShows = [...allShowMap.values()];
+
     for (const d of allShows) {
       for (const g of d.genres) {
         const gl = g.toLowerCase();
         if (gl.includes("romance")) counts.romance++;
-        else if (gl.includes("comedy")) counts.comedy++;
-        else if (gl.includes("mystery")) counts.mystery++;
-        else if (gl.includes("crime")) counts.crime++;
-        else if (gl.includes("family")) counts.family++;
-        else if (gl.includes("drama")) counts.drama++;
-        else if (gl.includes("thriller")) counts.thriller++;
-        else if (gl.includes("historical")) counts.historical = (counts.historical || 0) + 1;
+        if (gl.includes("comedy")) counts.comedy++;
+        if (gl.includes("mystery")) counts.mystery++;
+        if (gl.includes("crime")) counts.crime++;
+        if (gl.includes("family")) counts.family++;
+        if (gl.includes("drama")) counts.drama++;
+        if (gl.includes("thriller")) counts.thriller++;
+        if (gl.includes("historical") || gl.includes("history")) counts.historical++;
         if (/fantasy|sci/i.test(gl)) counts["sci-fi-and-fantasy"]++;
       }
     }
 
     const bySlug = new Map<string, AnyDrama>();
     for (const s of allShows) bySlug.set(s.slug, s);
+
     // Merge TVMaze catalog entries (curated + shelves take precedence).
     for (const s of catalogShows) { if (!bySlug.has(s.slug)) bySlug.set(s.slug, s); }
 
@@ -184,6 +198,8 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
       genreCounts: counts,
       liveCount,
       loading,
+      catalogShows,
+      catalogLoading,
       collectionResolve,
       findBySlug,
     };

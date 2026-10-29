@@ -9,3 +9,5 @@ tsconfig.tsbuildinfo
 dist/
 dist-single/
 .env.local
+
+.tvmaze-cache

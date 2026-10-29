@@ -14,16 +14,10 @@ type AnyDrama = Drama | EnrichedDrama;
 
 export default function DramaPage() {
   const { slug } = useParams();
-  const { findBySlug, shelves } = useLiveData();
-  const { user, watchlist, addToWatchlist, removeFromWatchlist, openAuthModal } = useAuth();
+  const { findBySlug, shelves, catalogLoading } = useLiveData();
   const drama = useMemo(() => findBySlug(slug ?? ""), [findBySlug, slug]);
   const [supp, setSupp] = useState<ServerEnrich | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const baseDrama = drama as EnrichedDrama;
-  // The router can briefly render an unknown slug before the catalog resolves.
-  // Do not dereference an undefined drama before NotFound can render.
-  const tvmazeId = drama ? baseDrama.tvmazeId : undefined;
+  const tvmazeId = drama ? (drama as EnrichedDrama).tvmazeId : undefined;
 
   useEffect(() => {
     setSupp(null);
@@ -33,7 +27,23 @@ export default function DramaPage() {
     return () => { cancelled = true; };
   }, [tvmazeId]);
 
-  if (!drama) return <NotFound slug={slug} />;
+  if (!drama) return catalogLoading ? <CatalogLoading /> : <NotFound slug={slug} />;
+  return <DramaDetails drama={drama} shelves={shelves} supp={supp} />;
+}
+
+function CatalogLoading() {
+  return (
+    <section className="relative z-10 px-4 md:px-8 lg:px-12 py-16 max-w-2xl mx-auto text-center">
+      <h1 className="section-title text-3xl md:text-4xl mb-3">Loading drama catalogue</h1>
+      <p style={{ color: "var(--text-muted)" }}>Looking up this title in the full TVMaze archive…</p>
+    </section>
+  );
+}
+
+function DramaDetails({ drama, shelves, supp }: { drama: AnyDrama; shelves: Array<{ items: AnyDrama[] }>; supp: ServerEnrich | null }) {
+  const { user, watchlist, addToWatchlist, removeFromWatchlist, openAuthModal } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const baseDrama = drama as EnrichedDrama;
 
   // Merge base TVMaze-driven drama with optional supplemental (TMDB/IMDb).
   // Supplemental backdrop overrides TVMaze (TMDB 1280w is nicer for hero);

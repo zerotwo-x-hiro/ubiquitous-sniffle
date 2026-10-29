@@ -18,6 +18,8 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run build
+      - name: Verify complete TVMaze catalogue
+        run: npm run catalog:verify
       - run: npm test
       - name: Install Playwright chromium
         run: npx playwright install --with-deps chromium

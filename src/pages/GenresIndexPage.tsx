@@ -10,17 +10,19 @@ export default function GenresIndexPage() {
     title: "Genres & moods",
     description: "Browse K-dramas by genre — romance, thriller, fantasy, slice-of-life, and more — with live counts from the archive.",
   });
-  const { shelves, genreCounts } = useLiveData();
+  const { shelves, genreCounts, catalogShows, catalogLoading } = useLiveData();
   const all = useMemo(() => {
     const m = new Map();
     for (const s of shelves) if (!s.live) for (const d of s.items) if (!m.has(d.slug)) m.set(d.slug, d);
+    for (const d of catalogShows) if (!m.has(d.slug)) m.set(d.slug, d);
     return [...m.values()];
-  }, [shelves]);
+  }, [shelves, catalogShows]);
 
   function sampleFor(slug: string, n = 4) {
     const test = (g: string) => {
       const gl = g.toLowerCase();
       if (slug === "sci-fi-and-fantasy") return /fantasy|sci/i.test(gl);
+      if (slug === "historical") return /historical|history/i.test(gl);
       return gl.includes(slug.replace(/-and-fantasy$/, "").toLowerCase());
     };
     return all.filter((d: any) => d.genres.some(test)).slice(0, n);
@@ -32,7 +34,7 @@ export default function GenresIndexPage() {
         <span className="kicker"><span className="dot" />Browse by mood</span>
         <h1 className="section-title mt-3 text-4xl md:text-5xl">Genres & moods</h1>
         <p className="mt-3 max-w-2xl" style={{ color: "var(--text-muted)" }}>
-          Every collection on the site, live-counted. Counts update as newly-aired dramas land on the homepage.
+          {catalogLoading ? "Loading the full TVMaze archive…" : "Counts include the full TVMaze archive and curated homepage picks."}
         </p>
 
         <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">

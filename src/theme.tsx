@@ -28,7 +28,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.classList.remove("light", "dark");
     root.classList.add(t);
     const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-    if (meta) meta.content = t === "dark" ? "#0a0a0c" : "#fdfaf2";
+    if (meta) meta.content = t === "dark" ? "#070b13" : "#fbf5e9";
   }, []);
 
   useEffect(() => {
