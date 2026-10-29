@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useTheme } from "@/theme";
+import { useAuth } from "@/Auth";
+import { useState, useRef, useEffect } from "react";
 
 const LINKS = [
   { to: "/", label: "Home", end: true },
@@ -35,8 +37,14 @@ function SearchIcon() {
 export default function Nav() {
   const { theme, toggleTheme } = useTheme();
   const { search } = useLocation();
-  const [mobileOpen, setMobileOpen] = useState(false);
-
+  const { user, profile, openAuthModal, signOut } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => { if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false); };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
   return (
     <header className="site-header sticky top-0 z-50 w-full">
       <div className="site-header-inner flex items-center gap-5 px-[2.5%]">
@@ -96,25 +104,50 @@ export default function Nav() {
             )}
           </button>
 
-          <Link to="/lists" className="header-avatar grid place-items-center rounded-full" aria-label="Your lists">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0H4Z" />
-            </svg>
-          </Link>
-
-          <button
-            type="button"
-            className="mobile-menu-button grid place-items-center rounded-full lg:hidden"
-            aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
-            aria-expanded={mobileOpen}
-            onClick={() => setMobileOpen((open) => !open)}
-          >
-            {mobileOpen ? (
-              <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="2"><path d="m6 6 12 12M18 6 6 18" /></svg>
-            ) : (
-              <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="2"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
-            )}
-          </button>
+          {/* User avatar / sign-in */}
+          {user ? (
+            <div ref={menuRef} className="relative">
+              <button
+                onClick={() => setMenuOpen((v) => !v)}
+                className="rounded-sm overflow-hidden shrink-0"
+                style={{
+                  width: 34, height: 34,
+                  background: "linear-gradient(135deg, var(--accent), var(--accent-2))",
+                  display: "grid", placeItems: "center", color: "#fff", fontSize: 13, fontWeight: 800,
+                }}
+                aria-label="Account menu"
+              >
+                {(profile?.display_name || profile?.username || user.email || "U").charAt(0).toUpperCase()}
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 mt-2 w-56 rounded-md shadow-xl overflow-hidden z-50"
+                     style={{ background: "var(--surface)", border: "1px solid var(--border-strong)" }}>
+                  <div className="px-4 py-3 text-sm" style={{ borderBottom: "1px solid var(--border)" }}>
+                    <div className="font-semibold truncate" style={{ color: "var(--text)" }}>
+                      {profile?.display_name || profile?.username || "Signed in"}
+                    </div>
+                    <div className="text-[12px] truncate" style={{ color: "var(--text-dim)" }}>{user.email}</div>
+                  </div>
+                  <Link to="/lists" onClick={() => setMenuOpen(false)}
+                        className="block px-4 py-2.5 text-sm hover:bg-black/10 dark:hover:bg-white/10" style={{ color: "var(--text)" }}>
+                    My List
+                  </Link>
+                  <button onClick={async () => { setMenuOpen(false); await signOut(); }}
+                          className="block w-full text-left px-4 py-2.5 text-sm hover:bg-black/10 dark:hover:bg-white/10" style={{ color: "var(--text)" }}>
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={openAuthModal}
+              className="h-9 px-4 rounded-md text-[13px] font-semibold transition"
+              style={{ background: "var(--accent)", color: "#fff" }}
+            >
+              Sign in
+            </button>
+          )}
         </div>
       </div>
 
