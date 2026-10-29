@@ -21,7 +21,9 @@ export default function DramaPage() {
   const [busy, setBusy] = useState(false);
 
   const baseDrama = drama as EnrichedDrama;
-  const tvmazeId = baseDrama.tvmazeId;
+  // The router can briefly render an unknown slug before the catalog resolves.
+  // Do not dereference an undefined drama before NotFound can render.
+  const tvmazeId = drama ? baseDrama.tvmazeId : undefined;
 
   useEffect(() => {
     setSupp(null);
